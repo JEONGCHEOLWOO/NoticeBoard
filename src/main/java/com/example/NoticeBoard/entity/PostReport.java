@@ -1,0 +1,49 @@
+package com.example.NoticeBoard.entity;
+
+import com.example.NoticeBoard.enumeration.PostReportReason;
+import com.example.NoticeBoard.enumeration.ReportStatus;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
+@Table(name = "post_report")
+public class PostReport {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // 내부 PK
+
+    @ManyToOne
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post; // 신고 당한 게시글 id (Post PK)
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // 신고한 사람의 id (User PK)
+
+    @NotBlank
+    @Column(columnDefinition = "TEXT", nullable = false, updatable = false)
+    private String content; // 신고 내용
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PostReportReason postReportReason; // 자주 쓰이는 신고 사유 Enum : SPAM, INAPPROPRIATE, HATE_SPEECH, VIOLENCE, COPYRIGHT, PERSONAL_INFO, OTHER
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt; // 신고 접수 시간
+
+    private LocalDateTime reviewedAt; // 검토 시작 시간(들어오자 마자 바로 PROCESSING으로 설정)
+    private LocalDateTime resolvedAt; // 처리 완료 시간(상태가 RESOLVED으로 바뀔 때 설정)
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private ReportStatus reportStatus; // 신고 상태 Enum : PROCESSING, RESOLVED
+}
