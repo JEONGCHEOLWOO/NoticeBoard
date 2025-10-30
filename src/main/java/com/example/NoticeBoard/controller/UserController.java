@@ -13,25 +13,25 @@ public class UserController {
 
     private final UserService userService;
 
-    // 회원가입
+    // 회원가입 - postman 확인 완료
     @PostMapping("/register")
     public UserResponseDto register(@RequestBody @Valid UserRegisterRequestDto dto){
         return userService.register(dto);
     }
 
-    // 로그인
+    // 로그인 - postman 확인 완료
     @PostMapping("/login")
     public UserResponseDto login(@RequestBody @Valid LoginRequestDto dto){
         return userService.login(dto);
     }
 
-    // 비밀번호 변경
+    // 비밀번호 변경 - postman 확인 완료
     @PostMapping("/update/pw")
     public String updatePw(@RequestBody @Valid FindPwRequestDto dto, @RequestParam String newPassword){
         return userService.updatePw(dto, newPassword);
     }
 
-    // 아이디 찾기
+    // 아이디 찾기 - postman 확인 완료(service쪽 수정 필요 - 코멘트 달아놓음)
     @PostMapping("/find/id")
     public String findId(@RequestBody @Valid FindIdRequestDto dto) {
         return userService.findId(dto);

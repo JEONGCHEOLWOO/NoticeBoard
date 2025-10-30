@@ -31,7 +31,7 @@ public class UserService {
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
 
 
-    // 회원가입
+    // 회원가입 - 예외처리 전부 테스트 완료
     public UserResponseDto register(UserRegisterRequestDto registerRequestDto){
         if(userRepository.existsByLoginId(registerRequestDto.getLoginId())){
             throw new IllegalArgumentException("이미 존재하는 아이디 입니다.");
@@ -84,7 +84,7 @@ public class UserService {
     public String updatePw(FindPwRequestDto dto, String newPassword) {
 
         // 사용자 조회
-        User user = userRepository.findByUsernameAndEmail(dto.getUsername(),dto.getLoginId())
+        User user = userRepository.findByLoginIdAndUsername(dto.getLoginId(), dto.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
 
         // 🔒 비밀번호 유효성 검사
@@ -100,7 +100,7 @@ public class UserService {
         return "비밀번호가 성공적으로 변경되었습니다.";
     }
 
-    // 아이디 찾기
+    // 아이디 찾기 - 이메일로 찾기와 비밀번호로 찾기 할때 둘중 하나만 쓸 경우 하나는 null값이 나오니깐 그걸로 확인하는 코드로 다시 짜야됌 - 현재는 이메일로만 찾을 수 있게 되어있음.
     public String findId(FindIdRequestDto dto){
 
         // 사용자 조회

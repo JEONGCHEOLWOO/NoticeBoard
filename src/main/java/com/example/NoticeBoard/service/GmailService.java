@@ -47,12 +47,12 @@ public class GmailService {
 
     // 이메일 전송
     public void sendEmail(String to, String subject, String bodyText) throws Exception {
-        
         // "me" 는 OAuth 2.0 인증된 구글 사용자, Gmail API가 자동으로 내 구글 계정으로 대체하는 예약어, 내부적으로는 실제로 "admin123@gmail.com" 으로 되어있음.
         MimeMessage mimeMessage = createEmail(to, subject, bodyText);
         Message message = createMessageWithEmail(mimeMessage);
         
         try {
+            System.out.println("여기서 문제 일어나는거임?");
             gmail.users().messages().send("me", message).execute();
             System.out.println("✅ 이메일 발송 완료: " + to);
         } catch (GoogleJsonResponseException e) {
