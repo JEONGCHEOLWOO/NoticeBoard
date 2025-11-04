@@ -2,6 +2,7 @@ package com.example.NoticeBoard.service;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonError;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -27,12 +28,24 @@ public class GmailService {
         String clientSecret = dotenv.get("GMAIL_CLIENT_SECRET");
         String refreshToken = dotenv.get("GMAIL_REFRESH_TOKEN");
 
+        // Refresh Token으로 Access Token 재발급
+        var tokenResponse = new GoogleRefreshTokenRequest(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance(),
+                refreshToken,
+                clientId,
+                clientSecret
+        )
+                .setGrantType("refresh_token")
+                .execute();
+
         // OAuth2 인증 생성
         Credential credential = new GoogleCredential.Builder()
                 .setClientSecrets(clientId, clientSecret)
                 .setTransport(GoogleNetHttpTransport.newTrustedTransport())
                 .setJsonFactory(GsonFactory.getDefaultInstance())
                 .build()
+                .setAccessToken(tokenResponse.getAccessToken())
                 .setRefreshToken(refreshToken);
 
         // Gmail API 클라이언트 객체 생성
@@ -52,7 +65,6 @@ public class GmailService {
         Message message = createMessageWithEmail(mimeMessage);
         
         try {
-            System.out.println("여기서 문제 일어나는거임?");
             gmail.users().messages().send("me", message).execute();
             System.out.println("✅ 이메일 발송 완료: " + to);
         } catch (GoogleJsonResponseException e) {
@@ -83,6 +95,7 @@ public class GmailService {
         emailContent.writeTo(buffer);
         byte[] bytes = buffer.toByteArray();
         String encodedEmail = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
         Message message = new Message();
         message.setRaw(encodedEmail);
         return message;
