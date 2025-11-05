@@ -31,7 +31,7 @@ public class UserService {
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
 
 
-    // 회원가입 - 예외처리 전부 테스트 완료
+    // 회원가입 - postman으로 예외처리, 유효성 검사 전부 테스트 완료
     public UserResponseDto register(UserRegisterRequestDto registerRequestDto){
         if(userRepository.existsByLoginId(registerRequestDto.getLoginId())){
             throw new IllegalArgumentException("이미 존재하는 아이디 입니다.");
@@ -65,7 +65,7 @@ public class UserService {
         return  UserResponseDto.fromEntity(userRepository.save(user));
     }
 
-    // 로그인
+    // 로그인 - postman으로 예외처리 전부 확인 완료.
     public UserResponseDto login(LoginRequestDto dto){
         
         // 사용자 아이디 조회
@@ -80,7 +80,7 @@ public class UserService {
         return UserResponseDto.fromEntity(user);
     }
 
-    // 비밀번호 변경
+    // 비밀번호 변경 - postman으로 예외처리, 유효성 검사 확인 완료. - 현재 비밀번호와 같으면 변경 안되도록 에러 메세지 필요.
     public String updatePw(FindPwRequestDto dto, String newPassword) {
 
         // 사용자 조회
@@ -100,12 +100,27 @@ public class UserService {
         return "비밀번호가 성공적으로 변경되었습니다.";
     }
 
-    // 아이디 찾기 - 이메일로 찾기와 비밀번호로 찾기 할때 둘중 하나만 쓸 경우 하나는 null값이 나오니깐 그걸로 확인하는 코드로 다시 짜야됌 - 현재는 이메일로만 찾을 수 있게 되어있음.
+    // 아이디 찾기 - 이메일로 찾기, 전화번호로 찾기는 되어있지만, 이상한 이메일 주소가 들어오거나 다른 전화번호가 들어오면 예외처리를 못함. 수정 필요.
     public String findId(FindIdRequestDto dto){
 
-        // 사용자 조회
-        User user = userRepository.findByUsernameAndEmail(dto.getUsername(),dto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+        User user;
+
+        try {
+            if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+                user = userRepository.findByUsernameAndPhoneNumber(dto.getUsername(), dto.getPhoneNumber())
+                        .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+            }else if (dto.getPhoneNumber() == null || dto.getPhoneNumber().isBlank()) {
+                user = userRepository.findByUsernameAndEmail(dto.getUsername(), dto.getEmail())
+                        .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+
+            }else {
+                user = userRepository.findByUsernameAndEmail(dto.getUsername(), dto.getEmail())
+                        .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "아이디 찾기 중 오류가 발생했습니다.";
+        }
 
         return user.getLoginId();
     }
