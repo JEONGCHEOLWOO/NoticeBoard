@@ -1,11 +1,14 @@
 package com.example.NoticeBoard.service;
 
+import com.example.NoticeBoard.BusinessException;
 import com.example.NoticeBoard.dto.*;
 import com.example.NoticeBoard.entity.User;
 import com.example.NoticeBoard.enumeration.AuthProvider;
+import com.example.NoticeBoard.enumeration.ErrorCode;
 import com.example.NoticeBoard.enumeration.Role;
 import com.example.NoticeBoard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -33,96 +37,114 @@ public class UserService {
 
     // 회원가입 - postman으로 예외처리, 유효성 검사 전부 테스트 완료
     public UserResponseDto register(UserRegisterRequestDto registerRequestDto){
-        if(userRepository.existsByLoginId(registerRequestDto.getLoginId())){
-            throw new IllegalArgumentException("이미 존재하는 아이디 입니다.");
-        }
-        if(userRepository.existsByEmail(registerRequestDto.getEmail())){
-            throw new IllegalArgumentException("이미 존재하는 이메일 입니다.");
-        }
-        if(userRepository.existsByNickname(registerRequestDto.getNickname())){
-            throw new IllegalArgumentException("중복된 닉네임이 존재합니다.");
-        }
-        if(userRepository.existsByPhoneNumber(registerRequestDto.getPhoneNumber())){
-            throw new IllegalArgumentException("이미 해당 전화번호로 가입된 아이디가 있습니다.");
-        }
 
-        // 🔒 비밀번호 유효성 검사
-        validatePassword(registerRequestDto.getPassword());
+        try {
+            if (userRepository.existsByLoginId(registerRequestDto.getLoginId())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);
+            }
+            if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+            }
+            if (userRepository.existsByNickname(registerRequestDto.getNickname())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
+            }
+            if (userRepository.existsByPhoneNumber(registerRequestDto.getPhoneNumber())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_PHONE);
+            }
 
-        User user = User.builder()
-                .loginId(registerRequestDto.getLoginId())
-                .password(passwordEncoder.encode(registerRequestDto.getPassword()))
-                .nickname(registerRequestDto.getNickname())
-                .username(registerRequestDto.getUsername())
-                .sex(registerRequestDto.getSex())
-                .email(registerRequestDto.getEmail())
-                .phoneNumber(registerRequestDto.getPhoneNumber())
-                .birthDate(registerRequestDto.getBirthdate())
-                .role(Role.USER) // 회원 가입 시 일반 사용자로 가입.
-                .provider(AuthProvider.LOCAL) // 소셜 로그인이 아니므로 LOCAL
-                .build();
+            // 🔒 비밀번호 유효성 검사
+            validatePassword(registerRequestDto.getPassword());
 
-        return  UserResponseDto.fromEntity(userRepository.save(user));
+            User user = User.builder()
+                    .loginId(registerRequestDto.getLoginId())
+                    .password(passwordEncoder.encode(registerRequestDto.getPassword()))
+                    .nickname(registerRequestDto.getNickname())
+                    .username(registerRequestDto.getUsername())
+                    .sex(registerRequestDto.getSex())
+                    .email(registerRequestDto.getEmail())
+                    .phoneNumber(registerRequestDto.getPhoneNumber())
+                    .birthDate(registerRequestDto.getBirthdate())
+                    .role(Role.USER) // 회원 가입 시 일반 사용자로 가입.
+                    .provider(AuthProvider.LOCAL) // 소셜 로그인이 아니므로 LOCAL
+                    .build();
+
+            return UserResponseDto.fromEntity(userRepository.save(user));
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 로그인 - postman으로 예외처리 전부 확인 완료.
     public UserResponseDto login(LoginRequestDto dto){
-        
-        // 사용자 아이디 조회
-        User user = userRepository.findByLoginId(dto.getLoginId())
-                .orElseThrow(()-> new IllegalArgumentException("아이디가 존재하지 않습니다."));
 
-        // 비밀번호 조회
-        if(!passwordEncoder.matches(dto.getPassword(), user.getPassword())){
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        try{
+            // 사용자 아이디 조회
+            User user = userRepository.findByLoginId(dto.getLoginId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            // 비밀번호 조회
+            if(!passwordEncoder.matches(dto.getPassword(), user.getPassword())){
+                throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+            }
+
+            return UserResponseDto.fromEntity(user);
+
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
-        return UserResponseDto.fromEntity(user);
     }
 
     // 비밀번호 변경 - postman으로 예외처리, 유효성 검사 확인 완료. - 현재 비밀번호와 같으면 변경 안되도록 에러 메세지 필요.
     public String updatePw(FindPwRequestDto dto, String newPassword) {
 
-        // 사용자 조회
-        User user = userRepository.findByLoginIdAndUsername(dto.getLoginId(), dto.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+        try {
+            // 사용자 조회
+            User user = userRepository.findByLoginIdAndUsername(dto.getLoginId(), dto.getUsername())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 🔒 비밀번호 유효성 검사
-        validatePassword(newPassword);
+            // 🔒 비밀번호 유효성 검사
+            validatePassword(newPassword);
 
-        // 비밀번호 암호화 후 업데이트
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        user.setPassword(encodedPassword);
+            if (passwordEncoder.matches(newPassword, user.getPassword())) {
+                throw new BusinessException(ErrorCode.PASSWORD_SAME_AS_OLD);
+            }
 
-        // 저장
-        userRepository.save(user);
+            // 비밀번호 암호화 후 업데이트
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
 
-        return "비밀번호가 성공적으로 변경되었습니다.";
+            return "비밀번호가 성공적으로 변경되었습니다.";
+
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 아이디 찾기 - 이메일로 찾기, 전화번호로 찾기는 되어있지만, 이상한 이메일 주소가 들어오거나 다른 전화번호가 들어오면 예외처리를 못함. 수정 필요.
-    public String findId(FindIdRequestDto dto){
-
-        User user;
-
+    public String findId(FindIdRequestDto dto) {
         try {
+            User user;
+
             if (dto.getEmail() == null || dto.getEmail().isBlank()) {
                 user = userRepository.findByUsernameAndPhoneNumber(dto.getUsername(), dto.getPhoneNumber())
-                        .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
-            }else if (dto.getPhoneNumber() == null || dto.getPhoneNumber().isBlank()) {
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+            } else {
                 user = userRepository.findByUsernameAndEmail(dto.getUsername(), dto.getEmail())
-                        .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
-
-            }else {
-                user = userRepository.findByUsernameAndEmail(dto.getUsername(), dto.getEmail())
-                        .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "아이디 찾기 중 오류가 발생했습니다.";
-        }
 
-        return user.getLoginId();
+            return user.getLoginId();
+        } catch (BusinessException e) {
+            throw e; // 그대로 다시 던짐 (전역 예외 핸들러에서 처리됨)
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
 //    // 비밀번호 찾기 (이메일 - 임시 비밀번호)
@@ -162,25 +184,24 @@ public class UserService {
     // 인증번호 요청 (이메일 - 아이디 찾기, 비밀번호 찾기)
     public String emailVerificationCode(VerificationCodeRequestDto dto){
 
-        // 사용자 조회
-        User user = userRepository.findByUsernameAndEmail(dto.getUsername(),dto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
-
-        // 인증번호 생성
-        String code = generateCode();
-
-        // 이메일 내용
-        String subject = user.getUsername() + "님, 안녕하세요. 인증번호 안내입니다.";
-        String bodyText = "안녕하세요, " + user.getUsername() + "님. \n\n" +
-                "인증번호는 [ " + code + " ] 입니다.\n";
-
         try {
+            // 사용자 조회
+            User user = userRepository.findByUsernameAndEmail(dto.getUsername(),dto.getEmail())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            // 인증번호 생성
+            String code = generateCode();
+            String subject = user.getUsername() + "님, 안녕하세요. 인증번호 안내입니다.";
+            String bodyText = "안녕하세요, " + user.getUsername() + "님. \n\n" +
+                    "인증번호는 [ " + code + " ] 입니다.\n";
+
+
             if (user.getEmail().endsWith("@gmail.com")) {
                 gmailService.sendEmail(user.getEmail(), subject, bodyText);
             } else if (user.getEmail().endsWith("@naver.com")) {
                 naverMailService.sendEmail(user.getEmail(), subject, bodyText);
             } else {
-                throw new IllegalArgumentException("지원하지 않는 이메일 도메인입니다.");
+                throw new BusinessException(ErrorCode.UNSUPPORTED_EMAIL_DOMAIN);
             }
 
             // 5분간 유효
@@ -192,46 +213,53 @@ public class UserService {
                 }
             }, 5 * 60 * 1000);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("이메일 전송 실패: " + e.getMessage());
-        }
+            return "인증번호가 이메일로 전송되었습니다. 인증번호: " + code;
 
-        return "인증번호가 이메일로 전송되었습니다. 인증번호: " + code;
+        } catch (BusinessException e) {
+            log.warn("[login] 비즈니스 예외 발생: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("[login] 내부 오류 발생", e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 인증번호 요청 (전화번호 - 아이디 찾기, 비밀번호 찾기)
-    public String phoneNumberVerificationCode(VerificationCodeRequestDto dto){
+    public String phoneNumberVerificationCode(VerificationCodeRequestDto dto) {
 
-        // 사용자 조회
-        User user = userRepository.findByUsernameAndPhoneNumber(dto.getUsername(),dto.getPhoneNumber())
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 회원이 없습니다."));
+        try{
+            // 사용자 조회
+            User user = userRepository.findByUsernameAndPhoneNumber(dto.getUsername(), dto.getPhoneNumber())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 인증번호 생성
-        String code = generateCode();
+            // 인증번호 생성
+            String code = generateCode();
+            String message = "[Web발신]\n" + "인증번호[ " + code + " ]" + "타인에게 절대 알려주지 마세요.";
 
-        // 문자 내용
-        String message = "[Web발신]\n" + "인증번호[ " + code +" ]" + "타인에게 절대 알려주지 마세요.";
+            awsSmsService.sendSms(user.getPhoneNumber(), message);
 
-        awsSmsService.sendSms(user.getPhoneNumber(), message);
+            // 5분간 유효
+            verificationCodes.put(user.getPhoneNumber(), code);
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    verificationCodes.remove(user.getPhoneNumber());
+                }
+            }, 5 * 60 * 1000);
 
-        // 5분간 유효
-        verificationCodes.put(user.getPhoneNumber(), code);
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                verificationCodes.remove(user.getPhoneNumber());
-            }
-        }, 5 * 60 * 1000);
-
-        return "인증번호가 전화번호로 전송되었습니다. 인증번호: " + code;
+            return "인증번호가 전화번호로 전송되었습니다. 인증번호: " + code;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 🔒 비밀번호 유효성 검사
     private void validatePassword(String password) {
         String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_]).{8,}$";
         if (!Pattern.matches(regex, password)) {
-            throw new IllegalArgumentException("비밀번호는 8자 이상이며, 대소문자/숫자/특수문자를 포함해야 합니다.");
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD_FORMAT);
         }
     }
 

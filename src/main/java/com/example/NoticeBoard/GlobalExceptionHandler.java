@@ -1,8 +1,12 @@
 package com.example.NoticeBoard;
 
+import com.example.NoticeBoard.dto.ResponseDto;
+import com.example.NoticeBoard.enumeration.ErrorCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import software.amazon.awssdk.core.Response;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,21 +14,25 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 잘못된 입력값, 로그인 실패 등 처리
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", e.getMessage());
-        return ResponseEntity.ok(response);
+    // 유효성 검사 실패 예외 처리
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ResponseDto<?>> handleValidationException(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldError().getDefaultMessage();
+        return ResponseEntity.badRequest()
+                .body(ResponseDto.fail(message));
     }
 
-    // 그 외 모든 예외 처리
+    // 비즈니스 예외 처리 (
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ResponseDto<?>> handleBusinessException(BusinessException ex) {
+        return ResponseEntity.ok(ResponseDto.fail(ex.getErrorCode().getMessage()));
+    }
+
+    // 그 외 모든 예외 처리 (서버 오류)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleException(Exception e) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", "서버 오류가 발생했습니다.");
-        return ResponseEntity.status(500).body(response);
+    public ResponseEntity<ResponseDto<?>> handleException(Exception ex) {
+        ex.printStackTrace();
+        return ResponseEntity.internalServerError()
+                .body(ResponseDto.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }

@@ -2,7 +2,6 @@ package com.example.NoticeBoard;
 
 import com.example.NoticeBoard.service.GmailService;
 import com.example.NoticeBoard.service.NaverMailService;
-import jakarta.mail.MessagingException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,7 +14,7 @@ public class MailConfig {
     }
 
     @Bean
-    public NaverMailService naverMailService() throws MessagingException {
+    public NaverMailService naverMailService() {
         return new NaverMailService(); // NaverMailService 내부에서 .env 사용
     }
 
