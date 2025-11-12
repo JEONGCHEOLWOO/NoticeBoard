@@ -1,6 +1,6 @@
 package com.example.NoticeBoard.service;
 
-import com.example.NoticeBoard.BusinessException;
+import com.example.NoticeBoard.Exception.BusinessException;
 import com.example.NoticeBoard.dto.*;
 import com.example.NoticeBoard.entity.User;
 import com.example.NoticeBoard.enumeration.AuthProvider;
@@ -30,7 +30,8 @@ public class UserService {
     private final GmailService gmailService;
     private final NaverMailService naverMailService;
     private final PasswordEncoder passwordEncoder; // 비밀번호 암호화(BCrypt)
-    private final AwsSmsService awsSmsService;
+    private final TwilioSmsService twilioSmsService;
+//    private final AwsSmsService awsSmsService;
 
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
 
@@ -98,7 +99,7 @@ public class UserService {
         }
     }
 
-    // 비밀번호 변경 - postman으로 예외처리, 유효성 검사 확인 완료. - 현재 비밀번호와 같으면 변경 안되도록 에러 메세지 필요.
+    // 비밀번호 변경 - postman으로 예외처리, 유효성 검사 확인 완료.
     public String updatePw(FindPwRequestDto dto, String newPassword) {
 
         try {
@@ -126,7 +127,7 @@ public class UserService {
         }
     }
 
-    // 아이디 찾기 - 이메일로 찾기, 전화번호로 찾기는 되어있지만, 이상한 이메일 주소가 들어오거나 다른 전화번호가 들어오면 예외처리를 못함. 수정 필요.
+    // 아이디 찾기 - 이메일로 찾기, 전화번호로 찾기, 예외처리 postman으로 확인 완료.
     public String findId(FindIdRequestDto dto) {
         try {
             User user;
@@ -141,7 +142,7 @@ public class UserService {
 
             return user.getLoginId();
         } catch (BusinessException e) {
-            throw e; // 그대로 다시 던짐 (전역 예외 핸들러에서 처리됨)
+            throw e;
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
@@ -181,7 +182,7 @@ public class UserService {
 //        return "임시 비밀번호가 이메일로 발송되었습니다. 임시 비밀번호: " + tempPassword;
 //    }
 
-    // 인증번호 요청 (이메일 - 아이디 찾기, 비밀번호 찾기)
+    // 이메일로 인증번호 요청 (아이디 찾기, 비밀번호 찾기) - postman으로 예외처리 확인 완료.
     public String emailVerificationCode(VerificationCodeRequestDto dto){
 
         try {
@@ -236,7 +237,7 @@ public class UserService {
             String code = generateCode();
             String message = "[Web발신]\n" + "인증번호[ " + code + " ]" + "타인에게 절대 알려주지 마세요.";
 
-            awsSmsService.sendSms(user.getPhoneNumber(), message);
+            twilioSmsService.sendSms(user.getPhoneNumber(), message);
 
             // 5분간 유효
             verificationCodes.put(user.getPhoneNumber(), code);
@@ -249,8 +250,10 @@ public class UserService {
 
             return "인증번호가 전화번호로 전송되었습니다. 인증번호: " + code;
         } catch (BusinessException e) {
+            log.warn("[login] 비즈니스 예외 발생: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
+            log.error("[login] 내부 오류 발생", e);
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }

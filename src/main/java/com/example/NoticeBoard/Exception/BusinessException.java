@@ -1,4 +1,4 @@
-package com.example.NoticeBoard;
+package com.example.NoticeBoard.Exception;
 
 import com.example.NoticeBoard.enumeration.ErrorCode;
 import lombok.Getter;

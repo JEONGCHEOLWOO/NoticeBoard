@@ -35,7 +35,7 @@ public class UserController {
         return ResponseEntity.ok(ResponseDto.success(result, "비밀번호 변경 성공"));
     }
 
-    // 아이디 찾기 - postman 확인 완료(service쪽 수정 필요 - 코멘트 달아놓음)
+    // 아이디 찾기 - postman 확인 완료
     @PostMapping("/find/id")
     public ResponseEntity<ResponseDto<?>> findId(@RequestBody @Valid FindIdRequestDto dto) {
         String result = userService.findId(dto);
