@@ -4,12 +4,10 @@ import com.example.NoticeBoard.enumeration.AuthProvider;
 import com.example.NoticeBoard.enumeration.Role;
 import com.example.NoticeBoard.enumeration.Sex;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

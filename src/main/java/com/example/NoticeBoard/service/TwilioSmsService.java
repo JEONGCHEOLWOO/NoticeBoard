@@ -21,7 +21,6 @@ public class TwilioSmsService {
         Twilio.init(accountSid, authToken);
     }
 
-    //
     public void sendSms(String to, String content) {
         try {
             Message message = Message.creator(

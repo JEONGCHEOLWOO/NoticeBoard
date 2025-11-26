@@ -31,7 +31,6 @@ public class UserService {
     private final NaverMailService naverMailService;
     private final PasswordEncoder passwordEncoder; // 비밀번호 암호화(BCrypt)
     private final TwilioSmsService twilioSmsService;
-//    private final AwsSmsService awsSmsService;
 
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
 
@@ -225,7 +224,7 @@ public class UserService {
         }
     }
 
-    // 인증번호 요청 (전화번호 - 아이디 찾기, 비밀번호 찾기)
+    // 전화번호로 인증번호 요청 (아이디 찾기, 비밀번호 찾기)
     public String phoneNumberVerificationCode(VerificationCodeRequestDto dto) {
 
         try{

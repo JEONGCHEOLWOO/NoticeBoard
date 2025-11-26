@@ -1,6 +1,7 @@
 package com.example.NoticeBoard.repository;
 
 import com.example.NoticeBoard.entity.User;
+import com.google.common.io.Files;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -32,4 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 전화번호 중복 체크
     boolean existsByPhoneNumber(String phoneNumber);
 
+    // 이메일로 유저 찾기 (소셜 로그인)
+    Optional<User> findByEmail(String email);
 }

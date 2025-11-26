@@ -24,9 +24,9 @@ public class GmailService {
     public GmailService() throws Exception {
         Dotenv dotenv = Dotenv.load();
 
-        String clientId = dotenv.get("GMAIL_CLIENT_ID");
-        String clientSecret = dotenv.get("GMAIL_CLIENT_SECRET");
-        String refreshToken = dotenv.get("GMAIL_REFRESH_TOKEN");
+        String clientId = dotenv.get("GOOGLE_CLIENT_ID");
+        String clientSecret = dotenv.get("GOOGLE_CLIENT_SECRET");
+        String refreshToken = dotenv.get("GOOGLE_REFRESH_TOKEN");
 
         // Refresh Token으로 Access Token 재발급
         var tokenResponse = new GoogleRefreshTokenRequest(
