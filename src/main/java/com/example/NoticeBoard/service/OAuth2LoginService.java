@@ -38,7 +38,7 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
         String birthday = null;
         AuthProvider authProvider = null;
 
-        // 소셜 로그인 타입별 처리
+        // 소셜 로그인 타입별 처리 - Naver, Kakao, Google 확인완료.
         switch (provider) {
             case "naver":
                 Map<String, Object> naverResponse = (Map<String, Object>) attributes.get("response");

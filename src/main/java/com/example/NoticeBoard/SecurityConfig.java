@@ -36,9 +36,11 @@ public class SecurityConfig {
                 .requestMatchers("/", "/oauth2/**", "/login/**", "/oauth-success").permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2Login(oauth -> oauth
+            .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2LoginService))
-                .successHandler(oAuth2SuccessHandler)
+                .authorizationEndpoint(endpoint ->
+                    endpoint.baseUri("/oauth2/authorization")
+                ).successHandler(oAuth2SuccessHandler)
             );
 
         return http.build();
