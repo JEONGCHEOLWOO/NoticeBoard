@@ -1,7 +1,6 @@
 package com.example.NoticeBoard.controller;
 
 import com.example.NoticeBoard.dto.*;
-import com.example.NoticeBoard.service.OAuth2LoginService;
 import com.example.NoticeBoard.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private OAuth2LoginService oAuth2LoginService;
 
     // 회원가입 - postman 확인 완료
     @PostMapping("/register")
@@ -29,21 +27,6 @@ public class UserController {
         UserResponseDto userResponseDto = userService.login(dto);
         return ResponseEntity.ok(ResponseDto.success(userResponseDto, "로그인 성공"));
     }
-
-//    // 로그인(소셜 로그인)
-//    @PostMapping("/login/{provider}")
-//    public ResponseEntity<?> loginToProvider(@PathVariable String provider) {
-//        String url = oAuth2LoginService.loadUser(provider);
-//        return ResponseEntity.ok(url);
-//    }
-//
-//    @PostMapping("/callback/{provider}")
-//    public User socialLoginCallback(
-//            @PathVariable String provider,
-//            @RequestParam String code
-//    ) {
-//        return oAuth2LoginService.handleCallback(provider, code);
-//    }
 
     // 비밀번호 변경 - postman 확인 완료
     @PostMapping("/update/pw")

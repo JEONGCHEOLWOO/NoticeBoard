@@ -2,7 +2,7 @@ package com.example.NoticeBoard;
 
 import java.util.Date;
 
-import com.google.api.client.util.Value;
+import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

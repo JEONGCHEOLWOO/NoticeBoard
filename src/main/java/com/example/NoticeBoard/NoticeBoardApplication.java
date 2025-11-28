@@ -9,12 +9,15 @@ public class NoticeBoardApplication {
 
 	public static void main(String[] args) {
 
-		// .env 파일 읽기 (dotenv 라이브러리)
-		Dotenv dotenv = Dotenv.load();
+		Dotenv dotenv = Dotenv.configure()
+				.directory("./")  // 프로젝트 루트에서 읽기
+				.ignoreIfMissing() // 파일 없으면 무시
+				.load();
 
-		System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
-		System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
-		System.setProperty("DB_URL", dotenv.get("DB_URL"));
+		// .env 내용을 시스템 환경변수로 등록
+		dotenv.entries().forEach(entry ->
+				System.setProperty(entry.getKey(), entry.getValue())
+		);
 
 		SpringApplication.run(NoticeBoardApplication.class, args);
 	}

@@ -34,9 +34,12 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
         // 공통 변수 선언
         String email = null;
         String name = null;
+        String nickname = null;
         String gender = null;
         String birthday = null;
+        String phoneNumber = null;
         AuthProvider authProvider = null;
+        String provider_id = null;
 
         // 소셜 로그인 타입별 처리 - Naver, Kakao, Google 확인완료.
         switch (provider) {
@@ -53,16 +56,24 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                 name = (String) attributes.get("name");
                 authProvider = AuthProvider.GOOGLE;
                 break;
-            case "kakao":
+            case "kakao": // profile_nickname, name, account_email, gender, birthday, birthyear, phone_number, profile_image
                 Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
                 Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
                 email = (String) kakaoAccount.get("email");
-                name = (String) kakaoProfile.get("nickname");
+                name = (String) kakaoAccount.get("name");
+                nickname = (String) kakaoProfile.get("nickname");
+                gender = (String) kakaoProfile.get("gender");
+                birthday = (String) kakaoProfile.get("birthday") + kakaoProfile.get("birthyear");
+                phoneNumber = (String) kakaoProfile.get("phone_number");
                 authProvider = AuthProvider.KAKAO;
                 break;
-            case "facebook":
+            case "facebook": // id, name, email, gender, birthday, profile(공개 프로필)
                 email = (String) attributes.get("email");
                 name = (String) attributes.get("name");
+                nickname = (String) attributes.get("name"); // nickname이 따로 없으면 name을 nickname으로 설정.
+                gender = (String) attributes.get("gender");
+                birthday = (String) attributes.get("birthday");
+                provider_id = (String) attributes.get("id");
                 authProvider = AuthProvider.FACEBOOK;
                 break;
             default:
@@ -71,8 +82,8 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
 
         // 성별 처리
         Sex sex;
-        if ("M".equalsIgnoreCase(gender)) sex = Sex.MALE;
-        else if ("F".equalsIgnoreCase(gender)) sex = Sex.FEMALE;
+        if ("M".equalsIgnoreCase(gender) || "male".equalsIgnoreCase(gender)) sex = Sex.MALE;
+        else if ("F".equalsIgnoreCase(gender) || "female".equalsIgnoreCase(gender)) sex = Sex.FEMALE;
         else sex = Sex.UNKNOWN;
 
         // 기본 역할
@@ -83,15 +94,16 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
         if (user == null) {
             user = User.builder()
                     .loginId(email)
-                    .password("") // 소셜 로그인 시 임의 패스워드
-                    .nickname(name)
+                    .nickname(nickname)
                     .username(name)
+                    .password("") // 소셜 로그인 시 임의 패스워드
                     .sex(sex)
                     .email(email)
                     .phoneNumber("+821025278661") // 선택
                     .birthDate(birthday) // 선택
                     .role(role)
                     .provider(authProvider)
+                    .providerId(provider_id)
                     .build();
             userRepository.save(user);
         }
