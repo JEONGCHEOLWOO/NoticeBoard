@@ -45,7 +45,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 20) // +820112345678 이 형태가 되야 될꺼 같음. 010-1234-5678 13자리 이상, 국제번호 (+82) +5~6자리
     private String phoneNumber; // 전화번호
 
-    private String birthDate; // 생년월일
+    private String birthDate; // 생년월일 - 20250101
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)

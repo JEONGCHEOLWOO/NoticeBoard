@@ -56,30 +56,34 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                 name = (String) attributes.get("name");
                 authProvider = AuthProvider.GOOGLE;
                 break;
-            case "kakao": // profile_nickname, name, account_email, gender, birthday, birthyear, phone_number, profile_image
+            case "kakao": // profile_nickname, name, account_email, gender(male, female), birthday, birthyear, phone_number, profile_image
                 Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
                 Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
                 email = (String) kakaoAccount.get("email");
                 name = (String) kakaoAccount.get("name");
                 nickname = (String) kakaoProfile.get("nickname");
-                gender = (String) kakaoProfile.get("gender");
-                birthday = (String) kakaoProfile.get("birthday") + kakaoProfile.get("birthyear");
-                phoneNumber = (String) kakaoProfile.get("phone_number");
+                gender = (String) kakaoAccount.get("gender");
+                birthday = (String) kakaoAccount.get("birthyear") + kakaoAccount.get("birthday");
+                phoneNumber = ((String) kakaoAccount.get("phone_number")).replaceAll("[\\s-]",""); // +82 010-1234-4567 형태를 +820123456789 로 변경. 공백,하이픈 제거
+                provider_id = (String) kakaoAccount.get("email");
                 authProvider = AuthProvider.KAKAO;
                 break;
-            case "facebook": // id, name, email, gender, birthday, profile(공개 프로필)
+            case "facebook": // id, name, email, gender(M, F), birthday, profile(공개 프로필) - phoneNumber 못받음.
                 email = (String) attributes.get("email");
                 name = (String) attributes.get("name");
                 nickname = (String) attributes.get("name"); // nickname이 따로 없으면 name을 nickname으로 설정.
                 gender = (String) attributes.get("gender");
-                birthday = (String) attributes.get("birthday");
+                String[] birthArr = ((String) attributes.get("birthday")).split("/"); // 01/01/2025 형태를 20250101 로 변경.
+                birthday = birthArr[2] + birthArr[0] + birthArr[1];
                 provider_id = (String) attributes.get("id");
+                phoneNumber = "+820123456789";
                 authProvider = AuthProvider.FACEBOOK;
                 break;
             default:
                 throw new OAuth2AuthenticationException("Unsupported provider: " + provider);
         }
 
+        System.out.println("gender: " + gender);
         // 성별 처리
         Sex sex;
         if ("M".equalsIgnoreCase(gender) || "male".equalsIgnoreCase(gender)) sex = Sex.MALE;
@@ -99,7 +103,7 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                     .password("") // 소셜 로그인 시 임의 패스워드
                     .sex(sex)
                     .email(email)
-                    .phoneNumber("+821025278661") // 선택
+                    .phoneNumber(phoneNumber) // 선택
                     .birthDate(birthday) // 선택
                     .role(role)
                     .provider(authProvider)
