@@ -1,9 +1,16 @@
 package com.example.NoticeBoard.service;
 
+import com.example.NoticeBoard.dto.PostReportRequestDto;
 import com.example.NoticeBoard.dto.PostRequestDto;
 import com.example.NoticeBoard.dto.PostResponseDto;
 import com.example.NoticeBoard.entity.Post;
+import com.example.NoticeBoard.entity.PostLike;
+import com.example.NoticeBoard.entity.PostReport;
 import com.example.NoticeBoard.entity.User;
+import com.example.NoticeBoard.enumeration.PostStatus;
+import com.example.NoticeBoard.enumeration.ReportStatus;
+import com.example.NoticeBoard.repository.PostLikeRepository;
+import com.example.NoticeBoard.repository.PostReportRepository;
 import com.example.NoticeBoard.repository.PostRepository;
 import com.example.NoticeBoard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,33 +27,32 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostReportRepository postReportRepository;
+    private final PostLikeRepository postLikeRepository;
 
     // 게시글 작성 (나중에 예외 처리를 RuntimeException, IllegalArgumentException 말고 자세히 할 필요가 있음)
     public PostResponseDto createPost(Long userId, PostRequestDto requestDto){
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new IllegalArgumentException("해당 회원을 찾지 못했습니다."));
+                .orElseThrow(()-> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
 
         Post post = Post.builder()
                 .category(requestDto.getCategory())
                 .title(requestDto.getTitle())
                 .content(requestDto.getContent())
+                .imageUri(requestDto.getImageUri())
+                .fileUri(requestDto.getFileUri())
                 .user(user)
                 .build();
-
-//        디버깅
-//        Post saved = postRepository.save(post);
-//        System.out.println(saved);
-//        return PostResponseDto.fromEntity(saved);
 
         return PostResponseDto.fromEntity(postRepository.save(post));
     }
 
-    // 게시글 수정
+    // 게시글 수정 - 본인이 작성한 게시글 일때만 수정 버튼 생성 및 수정 가능
     public PostResponseDto updatePost(Long postId, Long userId, PostRequestDto requestDto){
         Post post = postRepository.findById(postId)
-                .orElseThrow(()-> new IllegalArgumentException("해당 게시글을 찾지 못했습니다."));
+                .orElseThrow(()-> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
-        // 작성자 본인인지 확인
+        // 작성자 본인 확인
         if (!post.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("본인이 작성한 게시글만 수정할 수 있습니다.");
         }
@@ -55,17 +61,25 @@ public class PostService {
         post.setTitle(requestDto.getTitle());
         post.setContent(requestDto.getContent());
 
+        if (requestDto.getImageUri() != null) {
+            post.setImageUri(requestDto.getImageUri());
+        }
+
+        if (requestDto.getFileUri() != null) {
+            post.setFileUri(requestDto.getFileUri());
+        }
+
         return PostResponseDto.fromEntity(post);
     }
 
     // 게시글 삭제
     public void deletePost(Long postId, Long userId){
         Post post = postRepository.findById(postId)
-                .orElseThrow(()-> new RuntimeException("해당 게시글을 찾지 못했습니다."));
+                .orElseThrow(()-> new RuntimeException("해당 게시글을 찾을 수 없습니다."));
 
-        // 작성자 본인인지 확인
+        // 작성자 본인 확인
         if (!post.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("본인이 작성한 게시글만 수정할 수 있습니다.");
+            throw new IllegalArgumentException("본인이 작성한 게시글만 삭제할 수 있습니다.");
         }
         postRepository.deleteById(postId);
     }
@@ -109,4 +123,66 @@ public class PostService {
                 .map(PostResponseDto::fromEntity)
                 .toList();
     }
+
+    // 게시글 좋아요
+    public void likePost(Long postId, Long userId) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+
+        PostLike postLike = PostLike.builder()
+                .post(post)
+                .user(user)
+                .build();
+
+        postLikeRepository.save(postLike);
+
+        post.setLikeCount(post.getLikeCount() + 1);
+    }
+
+    // 게시글 좋아요 취소
+    public void unlikePost(Long postId, Long userId) {
+
+        PostLike postLike = postLikeRepository.findByPostIdAndUserId(postId, userId)
+                .orElseThrow(() -> new IllegalStateException("좋아요 기록이 없습니다."));
+
+        postLikeRepository.delete(postLike);
+
+        Post post = postLike.getPost();
+        post.setLikeCount(post.getLikeCount() - 1);
+    }
+
+
+    // 게시글 신고
+    public void reportPost(Long postId, Long userId, PostReportRequestDto requestDto) {
+
+        if (postReportRepository.existsByPostIdAndUserId(postId, userId)) {
+            throw new IllegalStateException("이미 신고한 게시글입니다.");
+        }
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+
+        PostReport report = PostReport.builder()
+                .post(post)
+                .user(user)
+                .content(requestDto.getContent())
+                .reportReason(requestDto.getReason())
+                .reportStatus(ReportStatus.PROCESSING)
+                .build();
+
+        postReportRepository.save(report);
+
+        // 신고 5회 이상 → 자동 블라인드
+        if (post.getReports().size() >= 5) {
+            post.setPostStatus(PostStatus.BLIND);
+        }
+    }
+
 }

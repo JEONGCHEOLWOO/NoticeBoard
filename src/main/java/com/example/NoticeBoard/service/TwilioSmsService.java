@@ -12,7 +12,7 @@ public class TwilioSmsService {
     private final String authToken;
     private final String fromNumber;
 
-    // 생성자
+    // 생성자 - .env 파일 로드
     public TwilioSmsService() {
         Dotenv dotenv = Dotenv.load();
         this.accountSid = dotenv.get("TWILIO_ACCOUNT_SID");
@@ -21,6 +21,7 @@ public class TwilioSmsService {
         Twilio.init(accountSid, authToken);
     }
 
+    // 문자로 인증번호 전송
     public void sendSms(String to, String content) {
         try {
             Message message = Message.creator(
@@ -28,7 +29,6 @@ public class TwilioSmsService {
                     new com.twilio.type.PhoneNumber(fromNumber), // Twilio 발신 번호
                     content
             ).create();
-
             System.out.println("✅ SMS 전송 성공 - SID: " + message.getSid());
         } catch (Exception e) {
             e.printStackTrace();

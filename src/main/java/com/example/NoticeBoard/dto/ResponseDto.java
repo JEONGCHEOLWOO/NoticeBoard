@@ -8,7 +8,9 @@ import lombok.Data;
 public class ResponseDto<T> {
 
     private boolean success;
+
     private T data;
+
     private String message;
 
     // 성공 응답

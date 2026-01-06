@@ -1,14 +1,14 @@
 package com.example.NoticeBoard.repository;
 
 import com.example.NoticeBoard.entity.User;
-import com.google.common.io.Files;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // create, delete, update, findId, findAll 필요.
+    // JpaRepository에서 CRUDRepository(Create, Read, Update, Delete)를 상속받고 있어
+    // create, update, delte, findAll, save 등의 메소드를 사용할 수 있음.
     // 로그인 아이디 조회
     Optional<User> findByLoginId(String loginId);
 

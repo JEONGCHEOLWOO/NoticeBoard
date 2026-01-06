@@ -1,6 +1,6 @@
 package com.example.NoticeBoard.enumeration;
 
-public enum PostReportReason {
+public enum ReportReason {
     SPAM,              // 스팸/광고
     INAPPROPRIATE,     // 음란물, 불건전한 게시물
     HATE_SPEECH,       // 혐오/차별적 발언

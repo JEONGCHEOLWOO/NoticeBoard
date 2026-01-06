@@ -1,6 +1,5 @@
 package com.example.NoticeBoard.Exception;
 
-import com.example.NoticeBoard.Exception.BusinessException;
 import com.example.NoticeBoard.dto.ResponseDto;
 import com.example.NoticeBoard.enumeration.ErrorCode;
 import org.springframework.http.ResponseEntity;

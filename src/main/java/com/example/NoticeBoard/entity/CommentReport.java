@@ -1,6 +1,6 @@
 package com.example.NoticeBoard.entity;
 
-import com.example.NoticeBoard.enumeration.CommentReportReason;
+import com.example.NoticeBoard.enumeration.ReportReason;
 import com.example.NoticeBoard.enumeration.ReportStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -34,7 +34,7 @@ public class CommentReport {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private CommentReportReason commentReportReason; // 자주 쓰이는 신고 사유 Enum : SPAM, INSULT, HARASSMENT, SEXUAL_CONTENT, OTHER
+    private ReportReason reportReason; // 자주 쓰이는 신고 사유 Enum : SPAM, INSULT, HARASSMENT, SEXUAL_CONTENT, OTHER
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

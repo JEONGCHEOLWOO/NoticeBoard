@@ -26,11 +26,23 @@ public class Comment {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content; // 댓글 내용
 
+    // 하나의 댓글엔 하나의 이미지만
+    @Column(name = "image_uri")
+    private String imageUri; // 이미지 주소
+
+    @Column(name = "file_uri")
+    private String fileUri; // 파일 주소
+
+    // GIF 여부 판단
+    private boolean gif;
+
     @ManyToOne
+//    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // FK -> 댓글 작성자 id
 
     @ManyToOne
+//    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post; // FK -> 게시글 id
 
@@ -48,7 +60,7 @@ public class Comment {
     private List<CommentReport> reports = new ArrayList<>(); // 댓글 신고 목록
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column (nullable = false, updatable = false)
     private LocalDateTime createdAt; // 댓글 작성 시간
 
     @UpdateTimestamp
@@ -56,7 +68,7 @@ public class Comment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private CommentStatus commentStatus; // 댓글 종류 (일반 댓글, 비밀 댓글, 삭제된 댓글 등)
+    private CommentStatus commentStatus; // 댓글 종류 (일반 댓글, 비밀 댓글, 삭제된 댓글, 블라인드된 댓글 등)
 
     private int likeCount; // 좋아요 수
 }

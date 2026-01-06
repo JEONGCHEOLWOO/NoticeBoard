@@ -1,8 +1,8 @@
 package com.example.NoticeBoard.entity;
 
 import com.example.NoticeBoard.enumeration.Category;
+import com.example.NoticeBoard.enumeration.PostStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -33,12 +33,21 @@ public class Post {
     // 게시글 작성자 id (User PK)
     private User user;
 
-    @NotBlank
     @Column(nullable = false, length = 100)
     private String title; // 게시글 제목
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content; // 게시글 내용
+
+    @JoinColumn(name = "image_uri")
+    private String imageUri; // 이미지 주소
+
+    @JoinColumn(name = "file_uri")
+    private String fileUri; // 파일 주소
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private PostStatus postStatus; // 게시글 종류 (일반 게시글, 비밀 게시글, 삭제된 게시글, 블라인드된 게시글 등)
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     // 게시글 댓글 목록, 게시글 하나에 여러개의 댓글 존재. 1:N 관계

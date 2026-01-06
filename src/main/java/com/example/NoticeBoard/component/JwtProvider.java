@@ -1,4 +1,4 @@
-package com.example.NoticeBoard;
+package com.example.NoticeBoard.component;
 
 import java.util.Date;
 
@@ -23,8 +23,7 @@ public class JwtProvider {
         Claims claims = Jwts.claims().setSubject(email);
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds); // 토큰 만료 시간
-        System.out.println("secretKey: " + secretKey);
-        System.out.println("SignatureAlgorithm.HS256: " + SignatureAlgorithm.HS256);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now) // 토큰 만료 시간 설정

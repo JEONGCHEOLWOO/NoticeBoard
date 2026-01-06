@@ -7,6 +7,7 @@ import com.example.NoticeBoard.enumeration.Sex;
 import com.example.NoticeBoard.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -32,7 +33,7 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
 
     private final UserRepository userRepository;
     private final RestTemplate restTemplate = new RestTemplate();
-    private Logger log;
+    private static final Logger log = LoggerFactory.getLogger(OAuth2LoginService.class);
 
 
     @Override
@@ -52,17 +53,21 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
         AuthProvider authProvider = null;
         String provider_id = null;
 
-        // 소셜 로그인 타입별 처리 - Naver, Kakao, Google 확인완료.
+        // 소셜 로그인 타입별 처리 - Naver, Kakao, Google, facebook 확인완료.
         switch (provider) {
-            case "naver":
+            case "naver": // id, nickname, profile_image, age, gender, email, mobile, mobile_e164, name, birthday, birthyear
+                // {id=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx, nickname=홍길동123, profile_image=https://ssl.pstatic.net/static/pwe/address/img_profile.png, age=20-29, gender=M, email=test123@naver.com, mobile=010-1234-5678, mobile_e164=+820123456789, name=홍길동, birthday=12-01, birthyear=2025}
                 Map<String, Object> naverResponse = (Map<String, Object>) attributes.get("response");
                 email = (String) naverResponse.get("email");
                 name = (String) naverResponse.get("name");
+                nickname = (String) naverResponse.get("nickname");
                 gender = (String) naverResponse.get("gender");
-                birthday = (String) naverResponse.get("birthday");
+                birthday = naverResponse.get("birthyear") + ((String) naverResponse.get("birthday")).replace("-","");
+                phoneNumber = (String) naverResponse.get("mobile_e164");
+                provider_id = (String) naverResponse.get("id");
                 authProvider = AuthProvider.NAVER;
                 break;
-            case "google": // OAuth2 API - name, email People API - gender, birthday, phoneNumber - 프로필에서 정보가 누락되어 있으면 error발생.(해결 완료)
+            case "google": // OAuth2 API - name, email, People API - gender, birthday, phoneNumber - 프로필에서 정보가 누락되어 있으면 error발생.(해결 완료)
                 String accessToken = userRequest.getAccessToken().getTokenValue();
                 Map<String, Object> person = getPerson(accessToken);
                 Map<String, String> info = extractInfo(person);
@@ -74,7 +79,6 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                 phoneNumber = info.get("phoneNumber");
                 provider_id = email;
                 authProvider = AuthProvider.GOOGLE;
-                System.out.println("email: " + email + " name: " + name + " nickname: " + nickname + " gender: " + gender + " birthday: " + birthday + " phoneNumber: " + phoneNumber);
                 break;
             case "kakao": // profile_nickname, name, account_email, gender(male, female), birthday, birthyear, phone_number, profile_image
                 Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
@@ -84,7 +88,7 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                 nickname = (String) kakaoProfile.get("nickname");
                 gender = (String) kakaoAccount.get("gender");
                 birthday = (String) kakaoAccount.get("birthyear") + kakaoAccount.get("birthday");
-                phoneNumber = ((String) kakaoAccount.get("phone_number")).replaceAll("[\\s-]",""); // +82 010-1234-4567 형태를 +820123456789 로 변경. 공백,하이픈 제거
+                phoneNumber = ((String) kakaoAccount.get("phone_number")).replaceAll("[\\s-]",""); // +82 010-2345-6789 형태를 +820123456789 로 변경. 공백,하이픈 제거
                 provider_id = email;
                 authProvider = AuthProvider.KAKAO;
                 break;
@@ -116,17 +120,17 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             user = User.builder()
-                    .loginId(email)
-                    .nickname(nickname)
-                    .username(name)
+                    .loginId(email) // test123@example.com
+                    .nickname(nickname) // 홍길동123
+                    .username(name) // 홍길동
                     .password("") // 소셜 로그인 시 임의 패스워드
-                    .sex(sex)
-                    .email(email)
-                    .phoneNumber(phoneNumber) // 선택
-                    .birthDate(birthday) // 선택
-                    .role(role)
-                    .provider(authProvider)
-                    .providerId(provider_id)
+                    .sex(sex) // MALE, FEMALE, UNKNOWN
+                    .email(email) // test123@example.com
+                    .phoneNumber(phoneNumber) // +820123456789
+                    .birthDate(birthday) // 20251201
+                    .role(role) // USER
+                    .provider(authProvider) // NAVER, GOOGLE, KAKAO, FACEBOOK
+                    .providerId(provider_id) // id or email
                     .build();
             userRepository.save(user);
         }
@@ -143,6 +147,8 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                 "email"
         );
     }
+
+    // 유저 정보 수집.
     private Map<String, Object> getPerson(String accessToken) {
         String url = "https://people.googleapis.com/v1/people/me"
                 + "?personFields=names,emailAddresses,genders,birthdays,phoneNumbers";
@@ -156,22 +162,24 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
     }
 
     // try catch 문을 사용한 이유: try catch문을 사용하지 않으면, 사용자가 생일을 등록을 안했을 때, 성별을 설정 안했을 때, 전화번호를 등록하지 않았을 때 NullPointerException이 발생함.
+    // 추가 정보 수집.
     private Map<String, String> extractInfo(Map<String, Object> personJson) {
         Map<String, String> result = new HashMap<>();
 
-        // gender
+        // 성별 (남,여) 수집
         try {
             List<Map<String, Object>> genders = (List<Map<String, Object>>) personJson.get("genders");
             if (genders != null && !genders.isEmpty()) {
                 // 이런식으로 생김 : [{metadata={primary=true, source={type=PROFILE, id=116922998305670175340}}, value=male, formattedValue=Male}]
                 Map<String, Object> gender = genders.get(0);
                 result.put("gender", (String) gender.get("value"));
+            } else {
+                log.warn("⚠ 구글 계정 프로필에서 성별(남/여)이 누락되었습니다. ", genders);
             }
-        } catch (Exception e) {
-            log.warn("⚠ 구글 계정 프로필에서 필요한 정보가 누락되었습니다(성별(남/여)): " + e);
+        } catch (Exception ignored) {
         }
 
-        // birthday
+        // 생년월일 수집.
         try {
             List<Map<String, Object>> birthdays = (List<Map<String, Object>>) personJson.get("birthdays");
             if (birthdays != null && !birthdays.isEmpty()) {
@@ -186,22 +194,24 @@ public class OAuth2LoginService extends DefaultOAuth2UserService implements OAut
                         String s = String.format("%04d%02d%02d", year, month, day);
                         result.put("birthday", s);
                     }
+                } else {
+                    log.warn("⚠ 구글 계정 프로필에서 생년월일이 누락되었습니다. ", birthdays);
                 }
             }
-        } catch (Exception e) {
-            log.warn("⚠ 구글 계정 프로필에서 필요한 정보가 누락되었습니다(생년월일): " + e);
+        } catch (Exception ignored) {
         }
 
-        // phone number
+        // 전화번호 수집.
         try {
             List<Map<String, Object>> phones = (List<Map<String, Object>>) personJson.get("phoneNumbers");
             // 이런식으로 생김:  [{metadata={primary=true, verified=true, source={type=PROFILE, id=116922998305670175340}}, value=010-2527-8661, canonicalForm=+821025278661, type=mobile, formattedType=Mobile}]
             if (phones != null && !phones.isEmpty()) {
                 Map<String, Object> phoneNumber = phones.get(0);
                 result.put("phoneNumber", (String) phoneNumber.get("canonicalForm"));
+            } else{
+                log.warn("⚠ 구글 계정 프로필에서 전화번호가 누락되었습니다. ", phones);
             }
-        } catch (Exception e) {
-            log.warn("⚠ 구글 계정 프로필에서 필요한 정보가 누락되었습니다(전화번호): " + e);
+        } catch (Exception ignored) {
         }
 
         return result;

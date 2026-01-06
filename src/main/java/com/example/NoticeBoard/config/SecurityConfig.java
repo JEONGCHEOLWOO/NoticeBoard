@@ -1,5 +1,6 @@
-package com.example.NoticeBoard;
+package com.example.NoticeBoard.config;
 
+import com.example.NoticeBoard.component.OAuth2SuccessHandler;
 import com.example.NoticeBoard.service.OAuth2LoginService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

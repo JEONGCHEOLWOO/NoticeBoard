@@ -1,4 +1,4 @@
-package com.example.NoticeBoard;
+package com.example.NoticeBoard.component;
 
 import com.example.NoticeBoard.entity.User;
 import com.example.NoticeBoard.repository.UserRepository;

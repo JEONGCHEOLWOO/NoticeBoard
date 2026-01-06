@@ -1,4 +1,4 @@
-package com.example.NoticeBoard;
+package com.example.NoticeBoard.config;
 
 import com.example.NoticeBoard.service.GmailService;
 import com.example.NoticeBoard.service.NaverMailService;
