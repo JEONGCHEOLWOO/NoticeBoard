@@ -3,6 +3,7 @@ package com.example.NoticeBoard.entity;
 import com.example.NoticeBoard.enumeration.AuthProvider;
 import com.example.NoticeBoard.enumeration.Role;
 import com.example.NoticeBoard.enumeration.Sex;
+import com.example.NoticeBoard.enumeration.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,12 +52,16 @@ public class User {
     @Column(nullable = false, length = 10)
     private Role role; // Enum: USER, ADMIN, SUPER_ADMIN // 역할
 
+    private UserStatus userStatus; // 회원 상태 (일반 유저, 삭제된 유저)
+    
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt; // 회원가입 날짜
 
     @UpdateTimestamp
     private LocalDateTime updatedAt; // 회원정보 수정 날짜
+    
+    private LocalDateTime deletedAt; // 회원 삭제 요청 날짜
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)

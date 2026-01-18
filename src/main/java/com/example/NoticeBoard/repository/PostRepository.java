@@ -2,7 +2,10 @@ package com.example.NoticeBoard.repository;
 
 import com.example.NoticeBoard.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -20,5 +23,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 게시글 조회(제목 + 내용)
     List<Post> findByTitleContainingOrContentContaining (String titleKeyword, String contentKeyword);
+
+    @Modifying
+    @Query("""
+        delete from Post p
+        where p.postStatus = 'DELETED'
+        and p.deletedAt < :expiredAt
+    """)
+    int hardDeleteExpiredPosts(LocalDateTime expiredAt);
 
 }

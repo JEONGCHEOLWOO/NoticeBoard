@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,7 +82,9 @@ public class PostService {
         if (!post.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("본인이 작성한 게시글만 삭제할 수 있습니다.");
         }
-        postRepository.deleteById(postId);
+
+        post.setDeletedAt(LocalDateTime.now());
+        post.setPostStatus(PostStatus.DELETED);
     }
 
     // 게시글 조회(전체)
@@ -89,7 +92,7 @@ public class PostService {
         return postRepository.findAll()
                 .stream()
                 .map(PostResponseDto::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // 게시글 조회(제목)
@@ -159,15 +162,19 @@ public class PostService {
     // 게시글 신고
     public void reportPost(Long postId, Long userId, PostReportRequestDto requestDto) {
 
-        if (postReportRepository.existsByPostIdAndUserId(postId, userId)) {
-            throw new IllegalStateException("이미 신고한 게시글입니다.");
-        }
-
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+
+        if (postReportRepository.existsByPostIdAndUserId(postId, userId)) {
+            throw new IllegalStateException("이미 신고한 게시글입니다.");
+        }
+
+        if (post.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("본인이 작성한 게시글은 신고할 수 없습니다.");
+        }
 
         PostReport report = PostReport.builder()
                 .post(post)

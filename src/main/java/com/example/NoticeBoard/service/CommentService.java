@@ -5,6 +5,7 @@ import com.example.NoticeBoard.dto.CommentRequestDto;
 import com.example.NoticeBoard.dto.CommentResponseDto;
 import com.example.NoticeBoard.entity.*;
 import com.example.NoticeBoard.enumeration.CommentStatus;
+import com.example.NoticeBoard.enumeration.PostStatus;
 import com.example.NoticeBoard.enumeration.ReportStatus;
 import com.example.NoticeBoard.repository.*;
 import jakarta.transaction.Transactional;
@@ -119,7 +120,8 @@ public class CommentService {
             throw new IllegalStateException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
-        commentRepository.deleteById(commentId);
+        comment.setDeletedAt(LocalDateTime.now());
+        comment.setCommentStatus(CommentStatus.DELETED);
     }
 
     // 댓글 좋아요
@@ -158,15 +160,19 @@ public class CommentService {
     // 댓글 신고
     public void reportComment(Long commentId, Long userId, CommentReportRequestDto requestDto) {
 
-        if (commentReportRepository.existsByCommentIdAndUserId(commentId, userId)) {
-            throw new IllegalStateException("이미 신고한 댓글입니다.");
-        }
-
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+
+        if (commentReportRepository.existsByCommentIdAndUserId(commentId, userId)) {
+            throw new IllegalStateException("이미 신고한 댓글입니다.");
+        }
+
+        if(comment.getUser().getId().equals(userId)){
+            throw new IllegalArgumentException("본인이 작성한 댓글은 신고할 수 없습니다.");
+        }
 
         CommentReport report = CommentReport.builder()
                 .comment(comment)

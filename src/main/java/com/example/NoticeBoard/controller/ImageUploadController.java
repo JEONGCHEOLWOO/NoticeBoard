@@ -25,7 +25,7 @@ public class ImageUploadController {
 
     // 댓글 이미지 업로드
     @PostMapping("/comment")
-    public ResponseEntity<Map<String, String>> uploadCommentImage(@RequestPart("image") MultipartFile image) {
+    public ResponseEntity<Map<String, String>> uploadCommentImage(@RequestParam("image") MultipartFile image) {
         String imageUri = imageService.upload(image, UploadContext.COMMENT);
         return ResponseEntity.ok(Map.of("imageUri", imageUri));
     }

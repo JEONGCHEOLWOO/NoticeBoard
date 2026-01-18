@@ -4,7 +4,6 @@ import com.example.NoticeBoard.CustomUserDetails;
 import com.example.NoticeBoard.dto.CommentReportRequestDto;
 import com.example.NoticeBoard.dto.CommentRequestDto;
 import com.example.NoticeBoard.dto.CommentResponseDto;
-import com.example.NoticeBoard.entity.Post;
 import com.example.NoticeBoard.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

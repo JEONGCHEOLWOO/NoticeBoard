@@ -1,6 +1,7 @@
 package com.example.NoticeBoard.entity;
 
 import com.example.NoticeBoard.enumeration.ActionType;
+import com.example.NoticeBoard.enumeration.ReportReason;
 import com.example.NoticeBoard.enumeration.ReportType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 @Table(name = "admin_log")
+// 관리자가 무엇을 처리했는가
 public class AdminLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,22 +26,26 @@ public class AdminLog {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private ActionType actionType; // 신고 처리 유형 Enum: BLOCK_POST, DELETE_COMMENT, BAN_USER
+    private ActionType actionType; // 신고 처리 유형 Enum: BLIND_POST, UNBLIND_POST, DELETE_POST, RESTORE_POST, BLIND_COMMENT, UNBLIND_COMMENT, DELETE_COMMENT, RESTORE_COMMENT, BAN_USER, UNBAN_USER
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // 신고 당한 대상자 id (게시글 작성자 or 댓글 작성자)
+    private User user; // 신고 당한 유저 Id (게시글 작성자 or 댓글 작성자)
 
     @ManyToOne
     @JoinColumn(name = "post_id")
-    private Post post; // 신고 당한 대상자가 작성한 신고된 게시글 id
+    private Post post; // 신고 당한 게시글 Id
 
     @ManyToOne
     @JoinColumn(name = "comment_id")
-    private Comment comment; // 신고 당한 대상자가 작성한 신고된 댓글 id
+    private Comment comment; // 신고 당한 댓글 Id
 
     @Enumerated(EnumType.STRING)
-    private ReportType reportType; // 신고 유형 Enum: POST, COMMENT
+    private ReportType reportType; // 신고 유형 Enum: POST, COMMENT, USER
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ReportReason reportReason; // 자주 쓰이는 신고 사유 Enum : SPAM, INAPPROPRIATE, HATE_SPEECH, VIOLENCE, COPYRIGHT, PERSONAL_INFO, OTHER
 
     @Column(columnDefinition = "TEXT")
     private String detail; // 신고 내용(상세 내용)

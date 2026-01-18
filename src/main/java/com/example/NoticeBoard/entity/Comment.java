@@ -11,10 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 @Table(name = "comment")
 public class Comment {
@@ -61,10 +59,12 @@ public class Comment {
 
     @CreationTimestamp
     @Column (nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 댓글 작성 시간
+    private LocalDateTime createdAt; // 댓글 작성 날짜
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt; // 댓글 수정 시간
+    private LocalDateTime updatedAt; // 댓글 수정 날짜
+
+    private LocalDateTime deletedAt; // 댓글 삭제 요청 날짜
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)

@@ -20,18 +20,15 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // 내부 PK
-    private Long id;
+    private Long id;  // 내부 PK
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    // Enum: FREE, NOTICE, QNA
-    private Category category;
+    private Category category;  // Enum: FREE, NOTICE, QNA
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    // 게시글 작성자 id (User PK)
-    private User user;
+    private User user;  // 게시글 작성자 id (User PK)
 
     @Column(nullable = false, length = 100)
     private String title; // 게시글 제목
@@ -73,6 +70,8 @@ public class Post {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt; // 게시글 업데이트 날짜
+    
+    private LocalDateTime deletedAt; // 게시글 삭제 요청 날짜
 
     private int likeCount; // 좋아요 수 -> 캐시 용도
 }
