@@ -34,8 +34,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(withDefaults())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/oauth2/**", "/login/**", "/oauth-success").permitAll()
-                .anyRequest().authenticated()
+                    .requestMatchers("/", "/oauth2/**", "/login/**", "/oauth-success").permitAll()
+                    .requestMatchers("/posts/search/**").permitAll()
+                    .requestMatchers("/admin/**").hasRole("ADMIN")
+                    .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2LoginService))

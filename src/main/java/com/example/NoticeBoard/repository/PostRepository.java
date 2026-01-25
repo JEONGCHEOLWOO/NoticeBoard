@@ -1,14 +1,14 @@
 package com.example.NoticeBoard.repository;
 
 import com.example.NoticeBoard.entity.Post;
+import com.example.NoticeBoard.enumeration.PostStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-
+@Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 게시글 조회(제목)
@@ -24,12 +24,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 게시글 조회(제목 + 내용)
     List<Post> findByTitleContainingOrContentContaining (String titleKeyword, String contentKeyword);
 
-    @Modifying
-    @Query("""
-        delete from Post p
-        where p.postStatus = 'DELETED'
-        and p.deletedAt < :expiredAt
-    """)
-    int hardDeleteExpiredPosts(LocalDateTime expiredAt);
+    // 특정 기간에 작성된 게시글
+    List<Post> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
+    // 특정 유저의 게시글
+    List<Post> findByUserId(Long userId);
+
+    // 특정 상태의 게시글 수
+    Long countByPostStatus(PostStatus status);
 }

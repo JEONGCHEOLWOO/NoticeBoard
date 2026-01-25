@@ -1,28 +1,21 @@
 package com.example.NoticeBoard.repository;
 
 import com.example.NoticeBoard.entity.AdminLog;
-import com.example.NoticeBoard.enumeration.ReportType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
+@Repository
 public interface AdminRepository extends JpaRepository<AdminLog, Long> {
 
-    List<AdminLog> findByReportTypeOrderByCreatedAtDesc(ReportType reportType);
+    // 특정 기간의 로그 조회
+    List<AdminLog> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    List<AdminLog> findByUser_Id(Long userId);
+    // 최근 N개의 로그 조회
+    List<AdminLog> findTop50ByOrderByCreatedAtDesc();
 
-    Collection<Object> findDailyAdminStats();
-
-    @Modifying
-    @Query("""
-        delete from User u
-        where u.userStatus = 'DELETED'
-        and u.deletedAt < :expiredAt
-    """)
-    int hardDeleteExpiredUsers(LocalDateTime expiredAt);
+    // 특정 기간의 모든 로그
+    List<AdminLog> findByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime startDate, LocalDateTime endDate);
 }

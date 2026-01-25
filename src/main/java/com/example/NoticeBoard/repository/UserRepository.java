@@ -1,10 +1,15 @@
 package com.example.NoticeBoard.repository;
 
 import com.example.NoticeBoard.entity.User;
+import com.example.NoticeBoard.enumeration.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     // JpaRepository에서 CRUDRepository(Create, Read, Update, Delete)를 상속받고 있어
@@ -35,4 +40,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 이메일로 유저 찾기 (소셜 로그인)
     Optional<User> findByEmail(String email);
+
+    // 특정 기간에 생성된 유저 수
+    Long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    // 특정 기간에 특정 상태가 된 유저 수
+    Long countByUserStatusAndUpdatedAtBetween(UserStatus status, LocalDateTime startDate, LocalDateTime endDate);
+
 }
