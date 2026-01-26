@@ -1,13 +1,10 @@
 package com.example.NoticeBoard.controller;
 
 import com.example.NoticeBoard.dto.AdminRequestDto;
-import com.example.NoticeBoard.dto.AdminResponseDto;
 import com.example.NoticeBoard.dto.AdminStatisticsDto;
-import com.example.NoticeBoard.dto.ResponseDto;
 import com.example.NoticeBoard.entity.AdminLog;
 import com.example.NoticeBoard.entity.User;
 import com.example.NoticeBoard.service.AdminService;
-import com.google.api.client.util.DateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")

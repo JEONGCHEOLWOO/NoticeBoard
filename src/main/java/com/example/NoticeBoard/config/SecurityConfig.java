@@ -26,13 +26,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(); // BCrypt 해시 알고리즘 사용 
     }
 
+    // HTTP 요청 보안 정책 정의
+    // 모든 프로젝트에서 필수적으로 사용되고, 어떤 URL을 공개하고 인증을 통해 허가할지 설정.
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        // 소셜 로그인용
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(withDefaults())
+            .csrf(csrf -> csrf.disable()) // CSRF 설정 -> REST API는 토근 기반 인증이라 CSRF 불필요.
+            .cors(withDefaults()) // WebConfig의 CORS 설정 사용.
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/", "/oauth2/**", "/login/**", "/oauth-success").permitAll()
                     .requestMatchers("/posts/search/**").permitAll()
