@@ -10,8 +10,11 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // 게시글별 댓글 조회
-    List<Comment> findByPostIdOrderByCreatedAtAsc(Long postId);
+    // 게시글 댓글 목록 조회
+    List<Comment> findByPostId(Long postId);
+
+    // User의 댓글 목록 조회
+    List<Comment> findByUserId(Long userId);
 
     // 특정 게시글에서 사용자의 GIF 개수
     long countByPostIdAndUserIdAndGifTrue(Long postId, Long userId);
@@ -19,13 +22,16 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // 최근 댓글 (도배 방지)
     List<Comment> findTop2ByPostIdAndUserIdOrderByCreatedAtDesc(Long postId, Long userId);
 
-    // 특정 기간에 작성된 댓글
-    List<Comment> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    // 게시글의 댓글 수 카운트
+    Long countByPostId(Long postId);
 
-    // 특정 유저의 댓글
-    List<Comment> findByUserId(Long userId);
+    // 유저의 댓글 수 카운트
+    Long countByUserId(Long userId);
 
-    // 특정 게시글의 댓글 삭제
+    // 게시글의 댓글 삭제
     void deleteByPostId(Long postId);
+
+    // 대댓글 조회
+    List<Comment> findByParentId(Long parentId);
 
 }

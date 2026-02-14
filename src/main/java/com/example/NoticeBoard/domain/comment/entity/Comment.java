@@ -17,7 +17,7 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@Table(name = "comment")
+@Table(name = "comments")
 public class Comment {
 
     @Id
@@ -34,31 +34,20 @@ public class Comment {
     @Column(name = "file_uri")
     private String fileUri; // 파일 주소
 
-    // GIF 여부 판단
-    private boolean gif;
+    @Column(nullable = false)
+    private boolean gif = false; // GIF 여부
 
-    @ManyToOne
-//    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user; // FK -> 댓글 작성자 id
+    @Column(name = "user_id", nullable = false)
+    private Long user; // 댓글 작성자 id
 
-    @ManyToOne
-//    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post; // FK -> 게시글 id
+    @Column(name = "post_id", nullable = false)
+    private Long post; // 게시글 id
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Comment parent; // 대댓글의 부모 (null 이면 최상위 댓글)
+    @Column(name = "parent_id")
+    private Long parentId; // 대댓글의 부모 Id (null 이면 최상위 댓글)
 
-    @OneToMany (mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> replies = new ArrayList<>(); // 대댓글 목록
-
-    @OneToMany (mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentLike> likes = new ArrayList<>(); // 댓글 좋아요 목록
-
-    @OneToMany (mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentReport> reports = new ArrayList<>(); // 댓글 신고 목록
+    @Column(nullable = false)
+    private Integer likeCount = 0; // 좋아요 수 (캐시)
 
     @CreationTimestamp
     @Column (nullable = false, updatable = false)
@@ -72,6 +61,4 @@ public class Comment {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private CommentStatus commentStatus; // 댓글 종류 (일반 댓글, 비밀 댓글, 삭제된 댓글, 블라인드된 댓글 등)
-
-    private int likeCount; // 좋아요 수
 }

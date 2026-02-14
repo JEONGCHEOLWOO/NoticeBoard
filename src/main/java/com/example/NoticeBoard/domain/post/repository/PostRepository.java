@@ -24,10 +24,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 게시글 조회(제목 + 내용)
     List<Post> findByTitleContainingOrContentContaining (String titleKeyword, String contentKeyword);
 
-    // 특정 기간에 작성된 게시글
-    List<Post> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
-
-    // 특정 유저의 게시글
+    // User의 게시글 목록 조회
     List<Post> findByUserId(Long userId);
 
     // 특정 상태의 게시글 수

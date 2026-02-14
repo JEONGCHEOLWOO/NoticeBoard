@@ -1,7 +1,5 @@
 package com.example.NoticeBoard.domain.post.entity;
 
-import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 @Table(name = "post_like",
-       uniqueConstraints = @UniqueConstraint(name = "uk_post_like_post_user",
+       uniqueConstraints = @UniqueConstraint(name = "uk_post_user",
        columnNames = {"post_id", "user_id"}))
 public class PostLike {
 
@@ -21,13 +19,11 @@ public class PostLike {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 내부 PK
 
-    @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
-    private Post post; // FK -> 게시글 id (게시글 PK)
+    private Long postId; // 게시글 id
 
-    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // FK -> 좋아요를 누른 사람의 id (User PK)
+    private Long userId; // 좋아요를 누른 사람의 id
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

@@ -1,6 +1,10 @@
 package com.example.NoticeBoard.domain.user.service;
 
 import com.example.NoticeBoard.domain.auth.dto.VerificationCodeRequestDto;
+import com.example.NoticeBoard.domain.comment.entity.Comment;
+import com.example.NoticeBoard.domain.comment.repository.CommentRepository;
+import com.example.NoticeBoard.domain.post.entity.Post;
+import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.user.dto.FindIdRequestDto;
 import com.example.NoticeBoard.domain.user.dto.FindPwRequestDto;
 import com.example.NoticeBoard.global.Exception.BusinessException;
@@ -17,14 +21,13 @@ import com.example.NoticeBoard.domain.auth.service.TwilioSmsService;
 import com.example.NoticeBoard.domain.auth.dto.LoginRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -35,13 +38,14 @@ import java.util.regex.Pattern;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final GmailService gmailService;
     private final NaverMailService naverMailService;
     private final PasswordEncoder passwordEncoder; // 비밀번호 암호화(BCrypt)
     private final TwilioSmsService twilioSmsService;
 
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
-
 
     // 회원가입 - postman으로 예외처리, 유효성 검사 전부 테스트 완료
     public UserResponseDto register(UserRegisterRequestDto registerRequestDto){
@@ -278,4 +282,20 @@ public class UserService {
         return String.format("%06d", new Random().nextInt(999999));
     }
 
+    // 사용자 상세 정보 조회
+    public UserDetailDto getUserDetail(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        List<Post> posts = postRepository.findByUserId(userId);
+        List<Comment> comments = commentRepository.findByUserId(userId);
+
+        return UserDetailDto.builder()
+                .user(user)
+                .posts(posts)
+                .comments(comments)
+                .postCount(posts.size())
+                .commentCount(comments.size())
+                .build();
+    }
 }

@@ -1,7 +1,5 @@
 package com.example.NoticeBoard.domain.user.entity;
 
-import com.example.NoticeBoard.domain.comment.entity.Comment;
-import com.example.NoticeBoard.domain.post.entity.Post;
 import com.example.NoticeBoard.global.enumeration.AuthProvider;
 import com.example.NoticeBoard.global.enumeration.Role;
 import com.example.NoticeBoard.global.enumeration.Sex;
@@ -12,14 +10,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+// 테이블 이름을 'user' 에서 'users' 로 바꾼 이유는 H2 부터는 'user'가 예약어에 포함되면서 변경하게 되었다.
+// H2는 자바(Java)로 작성된 가볍고 빠른 오픈 소스 관계형 데이터베이스 관리 시스템(RDBMS)이다.
 @Entity
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@Table(name = "user")
+@Table(name = "users")
 public class User {
 
     @Id
@@ -71,9 +69,4 @@ public class User {
 
     private String providerId; // 소셜 로그인 시 Id, Local로 로그인 시 null
 
-    @OneToMany(mappedBy = "user")
-    private List<Post> posts = new ArrayList<>(); // 게시글 목록
-
-    @OneToMany(mappedBy = "user")
-    private List<Comment> comments = new ArrayList<>(); // 댓글 목록
 }

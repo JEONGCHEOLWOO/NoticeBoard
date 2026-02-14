@@ -1,5 +1,6 @@
 package com.example.NoticeBoard.domain.post.service;
 
+import com.example.NoticeBoard.domain.comment.repository.CommentRepository;
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
@@ -27,6 +28,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
     private final PostReportRepository postReportRepository;
     private final PostLikeRepository postLikeRepository;
 
