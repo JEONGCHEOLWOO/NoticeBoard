@@ -1,17 +1,12 @@
 package com.example.NoticeBoard.domain.comment.entity;
 
-import com.example.NoticeBoard.domain.report.entity.CommentReport;
 import com.example.NoticeBoard.global.enumeration.CommentStatus;
-import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter @Setter

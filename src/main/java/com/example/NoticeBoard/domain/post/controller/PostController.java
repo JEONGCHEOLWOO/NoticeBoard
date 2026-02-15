@@ -47,13 +47,13 @@ public class PostController {
     
     // 게시글 조회(전체)
     @GetMapping("/search/all")
-    public List<PostResponseDto> getAllPosts(){
-        return postService.getAllPosts();
+    public List<PostResponseDto> searchAllPosts(){
+        return postService.searchAllPosts();
     }
 
     // 게시글 조회(제목)
     @GetMapping("/search/title")
-    public ResponseEntity<List<PostResponseDto>> sarchByTitle(@RequestParam String keyword){
+    public ResponseEntity<List<PostResponseDto>> searchByTitle(@RequestParam String keyword){
         return ResponseEntity.ok(postService.searchByTitle(keyword));
     }
 
@@ -93,14 +93,14 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    // 게시글 신고
-    @PostMapping("/report/{postId}")
-    public ResponseEntity<Void> reportPost(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody PostReportRequestDto postReportRequestDto){
-        postService.reportPost(postId, userDetails.getId(), postReportRequestDto);
-        return ResponseEntity.ok().build();
-    }
+//    // 게시글 신고
+//    @PostMapping("/report/{postId}")
+//    public ResponseEntity<Void> reportPost(
+//            @PathVariable Long postId,
+//            @AuthenticationPrincipal CustomUserDetails userDetails,
+//            @RequestBody PostReportRequestDto postReportRequestDto){
+//        postService.reportPost(postId, userDetails.getId(), postReportRequestDto);
+//        return ResponseEntity.ok().build();
+//    }
 
 }

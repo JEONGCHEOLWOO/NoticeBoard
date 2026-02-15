@@ -63,7 +63,7 @@ public class CommentService {
             if (gifCount >= 3) {
                 // 가장 오래된 GIF 댓글 삭제
                 List<Comment> oldestGif = commentRepository
-                        .findByPostIdOrderByCreatedAtAsc(postId)
+                        .findByPostId(postId)
                         .stream()
                         .filter(Comment::isGif)
                         .toList();

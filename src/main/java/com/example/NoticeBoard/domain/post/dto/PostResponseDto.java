@@ -20,11 +20,9 @@ public class PostResponseDto {
 
     private String content; // 게시글 내용
 
-    private String nickname; // 게시글 작성자 닉네임
+    private Integer viewCount; // 조회수
 
-    private int viewCount; // 조회수
-
-    private int likeCount; // 게시글 좋아요 수
+    private Integer likeCount; // 게시글 좋아요 수
 
     private PostStatus postStatus; // 게시글 종류(일반 게시글, 비밀 게시글, 삭제된 게시글, 블라인드된 게시글 등)
 
@@ -38,7 +36,6 @@ public class PostResponseDto {
                 .category(post.getCategory())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .nickname(post.getUser().getNickname())
                 .viewCount(post.getViewCount())
                 .likeCount(post.getLikeCount())
                 .postStatus(post.getPostStatus())

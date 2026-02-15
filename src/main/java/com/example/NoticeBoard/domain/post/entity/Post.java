@@ -25,7 +25,7 @@ public class Post {
     private Category category;  // Enum: FREE, NOTICE, QNA
 
     @JoinColumn(name = "user_id", nullable = false)
-    private Long userId;  // 게시글 작성자 id (User PK)
+    private Long userId;  // 게시글 작성자 id
 
     @Column(nullable = false, length = 100)
     private String title; // 게시글 제목
