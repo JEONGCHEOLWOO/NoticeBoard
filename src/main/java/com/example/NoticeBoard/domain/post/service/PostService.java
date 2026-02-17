@@ -3,22 +3,20 @@ package com.example.NoticeBoard.domain.post.service;
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
-import com.example.NoticeBoard.domain.report.dto.PostReportRequestDto;
-import com.example.NoticeBoard.domain.report.entity.PostReport;
 import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.post.entity.PostLike;
-import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.global.enumeration.PostStatus;
-import com.example.NoticeBoard.global.enumeration.ReportStatus;
-import com.example.NoticeBoard.domain.post.repository.PostLikeRepository;
-import com.example.NoticeBoard.domain.report.repository.PostReportRepository;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +25,24 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final KafkaTemplate<String, PostEvent> kafkaTemplate;
+    private final PostSearchRepository postSearchRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String TOPIC = "post-events";
+
+    private Pageable createPageable(int page, int size){
+        if(page < 0 || size <= 0){
+            throw new IllegalArgumentException("잘못된 페이지 요청입니다.");
+        }
+
+        return PageRequest.of(page,size, Sort.by(Sort.Direction.DESC, "createAt"));
+    }
+
+    // kafka는 데이터의 상태가 변하는 시점에 사용됨 -> CUD(Create, Update, Delete)로직이 완료된 직후에 호출
+    // 데이터 동기화가 필요한 메소드에 주로 들어감. 단순 조회(Read) 메소드엔 들어가지 않음.
+    // DB와 검색 엔진(ES: Elasticsearch)사이의 결합도를 낮추기 위함. DB저장은 성공했는데 ES 저장이 실패할 경우, Kafka가 중간에서 이벤트를 보관해주어 나중에라도 재처리할 수 있게 도와줌.
+    // 결합도를 낮추면 응집도가 높아지고, 그러면 모듈의 독립성을 높여 유지보수와 재사용을 극대화 할 수 있고, 내부 요소들끼리 더 밀접하게 연관되어 시스템이 안정적이고 수정이 용이해진다.
 
     // 게시글 작성 (나중에 예외 처리를 RuntimeException, IllegalArgumentException 말고 자세히 할 필요가 있음)
     public PostResponseDto createPost(Long userId, PostRequestDto requestDto){
@@ -45,7 +61,13 @@ public class PostService {
                 .likeCount(0)
                 .build();
 
-        return PostResponseDto.fromEntity(postRepository.save(post));
+        Post savedPost = postRepository.save(post);
+        PostResponseDto response = PostResponseDto.fromEntity(savedPost);
+
+        // Kafka 이벤트 생성
+        sendEvent(savedPost.getId(), "CREATE", response);
+
+        return response;
     }
 
     // 게시글 수정 - 본인이 작성한 게시글 일때만 수정 버튼 생성 및 수정 가능
@@ -77,10 +99,17 @@ public class PostService {
             post.setFileUri(requestDto.getFileUri());
         }
 
-        return PostResponseDto.fromEntity(post);
+        PostResponseDto response = PostResponseDto.fromEntity(post);
+
+        // Kafka 이벤트 생성
+        sendEvent(post.getId(), "UPDATE", response);
+
+        // Redis 기존 캐시 삭제
+        evictPostCache(postId);
+
+        return response;
     }
 
-    // ------------------------------------- 여기서 부터 수정 필요---------------
     // 게시글 삭제 (Soft Delete)
     public void deletePost(Long postId, Long userId){
         Post post = postRepository.findById(postId)
@@ -91,53 +120,57 @@ public class PostService {
             throw new IllegalArgumentException("본인이 작성한 게시글만 삭제할 수 있습니다.");
         }
 
-        // 삭제된 게시글인지 확인
-        if (post.getPostStatus() == PostStatus.DELETED) {
-            throw new IllegalArgumentException("삭제된 게시글은 수정할 수 없습니다.");
-        }
-
         post.setDeletedAt(LocalDateTime.now());
         post.setPostStatus(PostStatus.DELETED);
+
+        // Kafka 이벤트 생성
+        sendEvent(postId, "DELETE", null);
+
+        // Redis 캐시 삭제
+        evictPostCache(postId);
     }
 
-    // 게시글 조회(전체)
-    public List<PostResponseDto> searchAllPosts(){
-        return postRepository.findAll()
-                .stream()
-                .map(PostResponseDto::fromEntity)
-                .toList();
+    // ------------------------------------- 여기서 부터 수정 필요---------------
+
+    // 게시글 조회(전체) - 실무에서는 findAll()를 사용하지 않음
+    // -> 대규모 서비스에서는 데이터의 양이 만약 10만건이 들어온다고 하면 해당 데이터를 전부 찾는데 많은 시간이 소요되고 GC 압박(cpu 자원을 과도하게 소모하고 프로그램 성능을 저하시키는 상태)와 OutOfMemory 발생 가능.
+    // 따라서 페이징을 사용해서 한 페이지에 나오는 수 만큼만 찾음. (1~20)
+    public Page<PostResponseDto> findAllPosts(int page, int size){
+        return postRepository.findAllPosts(createPageable(page, size));
     }
 
     // 게시글 조회(제목)
-    public List<PostResponseDto> searchByTitle(String keyword){
-        return postRepository.findByTitleContaining(keyword)
-                .stream()
-                .map(PostResponseDto::fromEntity)
-                .toList();
+    public Page<PostResponseDto> findByTitle(String keyword, int page, int size){
+        return postRepository.findByTitle(keyword, createPageable(page, size));
     }
 
     // 게시글 조회(내용)
-    public List<PostResponseDto> searchByContent(String keyword){
-        return postRepository.findByContentContaining(keyword)
-                .stream()
-                .map(PostResponseDto::fromEntity)
-                .toList();
+    public Page<PostResponseDto> findByContent(String keyword, int page, int size){
+        return postRepository.findByContent(keyword, createPageable(page, size));
     }
 
     // 게시글 조회(작성자)
-    public List<PostResponseDto> searchByNickname(String keyword){
-        return postRepository.findByUser_NicknameContaining(keyword)
-                .stream()
-                .map(PostResponseDto::fromEntity)
-                .toList();
+    public Page<PostResponseDto> findByNickname(String keyword, int page, int size){
+        return postRepository.findByNickname(keyword, createPageable(page, size));
     }
 
     // 게시글 조회(제목 + 내용)
-    public List<PostResponseDto> searchByTitleOrContent(String keyword){
-        return postRepository.findByTitleContainingOrContentContaining(keyword, keyword)
-                .stream()
-                .map(PostResponseDto::fromEntity)
-                .toList();
+    public Page<PostResponseDto> findByTitleAndContent(String keyword, int page, int size){
+        return postRepository.findByTitleAndContent(keyword, createPageable(page, size));
+    }
+
+    private void sendEvent(Long postId, String type, PostResponseDto postResponseDto){
+        PostEvent event = new PostEvent(postId, type, postResponseDto);
+        kafkaTemplate.send(TOPIC, String.valueOf(postId), event)
+                .addCallback(
+                        result -> log.info("Kafka 전송 성공: {}", postId),
+                        ex -> log.error("Kafka 전송 실패: {}", ex.getMessage())
+                );
+    }
+
+    // Redis 캐시 삭제 - 데이터가 수정되거나 삭제되면 캐시를 제거해서 데이터 불일치를 방지시킴.
+    private void evictPostCache(Long postId){
+        redisTemplate.delete("post:detail:" + postId);
     }
 
 //    // 게시글 좋아요
