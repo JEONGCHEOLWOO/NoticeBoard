@@ -24,7 +24,7 @@ public class Post {
     @Column(nullable = false, length = 10)
     private Category category;  // Enum: FREE, NOTICE, QNA
 
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId;  // 게시글 작성자 id
 
     @Column(nullable = false, length = 100)
@@ -58,4 +58,31 @@ public class Post {
     
     private LocalDateTime deletedAt; // 게시글 삭제 요청 날짜
 
+    // ------------------비즈니스 메소드-------------------
+    // 게시글 수정
+    public void update(String title, String content, Category category) {
+        if (title != null && !title.isBlank()) {
+            this.title = title;
+        }
+        if (content != null && !content.isBlank()) {
+            this.content = content;
+        }
+        if (category != null) {
+            this.category = category;
+        }
+    }
+
+    // 게시글 삭제 (Soft Delete)
+    public void delete(){
+        this.postStatus = PostStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 삭제된 게시글인지 확인
+    public boolean isDeleted() {
+        return this.postStatus == PostStatus.DELETED || this.deletedAt != null;
+    }
+
+    public void incrementViewCount() {
+    }
 }
