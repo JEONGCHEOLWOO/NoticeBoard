@@ -46,6 +46,9 @@ public class Post {
     @Column(nullable = false)
     private Integer viewCount = 0; // 조회수
 
+    @Column(name = "comment_count", nullable = false)
+    private Integer commentCount =0;
+
     @Column(nullable = false)
     private Integer likeCount = 0; // 좋아요 수 -> 캐시 용도
 
@@ -60,7 +63,7 @@ public class Post {
 
     // ------------------비즈니스 메소드-------------------
     // 게시글 수정
-    public void update(String title, String content, Category category) {
+    public void update(String title, String content, Category category, PostStatus postStatus) {
         if (title != null && !title.isBlank()) {
             this.title = title;
         }
@@ -69,6 +72,9 @@ public class Post {
         }
         if (category != null) {
             this.category = category;
+        }
+        if (postStatus != null){
+            this.postStatus = postStatus;
         }
     }
 
@@ -83,6 +89,28 @@ public class Post {
         return this.postStatus == PostStatus.DELETED || this.deletedAt != null;
     }
 
+    // 조회수 증가
     public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    // 좋아요수 증가
+    public void incrementLikeCount(){
+        this.likeCount++;
+    }
+
+    // 좋아요수 감소
+    public void decrementLikeCount(){
+        if (this.likeCount >0) this.likeCount--;
+    }
+
+    // 댓글수 증가
+    public void incrementCommentCount(){
+        this.commentCount++;
+    }
+
+    // 댓글수 감소
+    public void decrementCommentCount(){
+        if (this.commentCount > 0) this.commentCount--;
     }
 }

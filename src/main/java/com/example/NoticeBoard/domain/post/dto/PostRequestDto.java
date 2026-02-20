@@ -1,6 +1,7 @@
 package com.example.NoticeBoard.domain.post.dto;
 
 import com.example.NoticeBoard.global.enumeration.Category;
+import com.example.NoticeBoard.global.enumeration.PostStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,6 +10,7 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
+// 게시글 수정 요청 dto
 public class PostRequestDto {
     @NotNull(message = "카테고리는 필수 입니다.")
     private Category category;  // 게시글 카테고리
@@ -20,6 +22,8 @@ public class PostRequestDto {
     @NotBlank(message = "내용은 필수 입니다.")
     @Size(min = 1)
     private String content;     // 게시글 내용
+    
+    private PostStatus postStatus; // 게시글 종류
     
     private String imageUri;    // 이미지 주소
     

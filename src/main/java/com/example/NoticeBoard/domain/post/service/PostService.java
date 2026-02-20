@@ -2,6 +2,7 @@ package com.example.NoticeBoard.domain.post.service;
 
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
+import com.example.NoticeBoard.domain.post.dto.PostSearchResponseDto;
 import com.example.NoticeBoard.domain.post.entity.PostEvent;
 import com.example.NoticeBoard.domain.post.entity.PostSearchDocument;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
@@ -42,7 +43,7 @@ public class PostService {
             throw new IllegalArgumentException("잘못된 페이지 요청입니다.");
         }
 
-        return PageRequest.of(page,size, Sort.by(Sort.Direction.DESC, "createAt"));
+        return PageRequest.of(page,size, Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     // kafka는 데이터의 상태가 변하는 시점에 사용됨 -> CUD(Create, Update, Delete)로직이 완료된 직후에 호출
@@ -71,7 +72,7 @@ public class PostService {
         PostResponseDto response = PostResponseDto.fromEntity(savedPost);
 
         // Kafka 이벤트 생성
-        sendEvent(savedPost.getId(), "CREATE", response);
+        sendEvent(savedPost.getId(), "CREATE");
 
         log.info("게시글 생성 완료: postId={}, userId={}", savedPost.getId(), userId);
 
@@ -101,7 +102,7 @@ public class PostService {
         // 엔터티에 비즈니스 로직을 설계하면 되는 경우 객체로 사용하는 것이고, 서비스에 비즈니스 로직을 설계하면 엔터티는 자료구조로 사용하는 방식이 된다.
         // 둘중 옳은 방법은 없다. 프로젝트에 맞는 방식으로 설계를 하면 된다.
         // 그러면 내 현재 설계는 도메인 주도 설계 -> MSA 설계로 넘거갈 예정이니 도메인 주도 설계에 초점을 두어 비즈니스 메소드를 엔터티에 두는것이 좋을꺼 같다.
-        post.update(requestDto.getTitle(), requestDto.getContent(), requestDto.getCategory());
+        post.update(requestDto.getTitle(), requestDto.getContent(), requestDto.getCategory(), requestDto.getPostStatus());
 
         if (requestDto.getImageUri() != null) {
             post.setImageUri(requestDto.getImageUri());
@@ -114,7 +115,7 @@ public class PostService {
         PostResponseDto response = PostResponseDto.fromEntity(post);
 
         // Kafka 이벤트 생성
-        sendEvent(post.getId(), "UPDATE", response);
+        sendEvent(post.getId(), "UPDATE");
 
         // Redis 기존 캐시 삭제
         evictPostCache(postId);
@@ -137,7 +138,7 @@ public class PostService {
         post.delete();
 
         // Kafka 이벤트 생성
-        sendEvent(postId, "DELETE", null);
+        sendEvent(postId, "DELETE");
 
         // Redis 캐시 삭제
         evictPostCache(postId);
@@ -187,23 +188,36 @@ public class PostService {
     // 위 어노테이션은 대표적으로 SimpleJpaRepository에 있는 findById, save, delete 메소드에 구현되어 있다.
     // 찾아보니 확실히 성능 개선에 대해서는 이점이 있지만, 추가 쿼리로 인해 DB의 네트워크 요청 건수 또한 최대 6배까지 늘어날 수 있어 비용이 많이 들 수 있기 때문에, 단건 조회(update, insert)요청 메소드에서는 사용하지 않는 것을 추천한다고 한다.
     @Transactional(readOnly = true)
-    public Page<PostResponseDto> searchPosts(String keyword, String type, Pageable pageable){
+    public Page<PostSearchResponseDto> searchPosts(String keyword, String type, Pageable pageable){
         log.info("게시글 검색: keyword={}, type={}", keyword, type);
 
-        Page<PostSearchDocument> postSearchDocuments = postSearchRepository.searchByCondition(keyword, type, pageable);
-        retrun postSearchDocuments.map(PostResponseDto::fromEntity);
+        Page<PostSearchDocument> documents = postSearchRepository.searchByCondition(keyword, type, pageable);
+        return documents.map(PostSearchResponseDto::fromEntity);
     }
 
     // 게시글 조회(전체) - 실무에서는 findAll()를 사용하지 않음
     // -> 대규모 서비스에서는 데이터의 양이 만약 10만건이 들어온다고 하면 해당 데이터를 전부 찾는데 많은 시간이 소요되고 GC 압박(cpu 자원을 과도하게 소모하고 프로그램 성능을 저하시키는 상태)와 OutOfMemory 발생 가능.
     // 따라서 페이징을 사용해서 한 페이지에 나오는 수 만큼만 찾음. (1~20)
     @Transactional(readOnly = true)
-    public Page<PostResponseDto> findAllPosts(int page, int size){
+    public Page<PostSearchResponseDto> findAllPosts(int page, int size){
         Pageable pageable = createPageable(page,size);
 
         Page<Post> posts = postRepository.findByPostStatus(PostStatus.NORMAL, pageable);
 
-        return posts.map(PostResponseDto::fromEntity);
+        return posts.map(post -> PostSearchResponseDto.builder()
+                .id(String.valueOf(post.getId()))
+                .postId(post.getId())
+                .userId(post.getUserId())
+                .category(post.getCategory())
+                .title(post.getTitle())
+                .image(post.getImageUri() != null)
+                .postStatus(post.getPostStatus())
+                .likeCount(post.getLikeCount())
+                .viewCount(post.getViewCount())
+                .commentCount(post.getCommentCount())
+                .nickname(post.getNickname())
+                .createdAt(post.getCreatedAt())
+                .build());
     }
 
 
@@ -216,8 +230,8 @@ public class PostService {
         log.debug("조회수 증가: postId={}, viewCount={}", postId, post.getViewCount());
     }
 
-    private void sendEvent(Long postId, String type, PostResponseDto postResponseDto){
-        PostEvent event = new PostEvent(postId, type, postResponseDto);
+    private void sendEvent(Long postId, String type){
+        PostEvent event = new PostEvent(postId, type);
         kafkaTemplate.send(TOPIC, String.valueOf(postId), event)
                 .addCallback(
                         result -> log.info("Kafka 전송 성공: postId={}, type={}", postId, type),

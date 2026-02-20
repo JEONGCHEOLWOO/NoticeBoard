@@ -1,6 +1,7 @@
 package com.example.NoticeBoard.domain.comment.repository;
 
 import com.example.NoticeBoard.domain.comment.entity.Comment;
+import com.example.NoticeBoard.global.enumeration.CommentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -27,6 +28,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 유저의 댓글 수 카운트
     Long countByUserId(Long userId);
+
+    // 게시글의 댓글 수 카운트
+    long countByPostIdAndCommentStatus(Long postId, CommentStatus commentStatus);
 
     // 게시글의 댓글 삭제
     void deleteByPostId(Long postId);
