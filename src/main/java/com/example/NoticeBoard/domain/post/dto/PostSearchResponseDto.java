@@ -36,7 +36,7 @@ public class PostSearchResponseDto {
                 .image(document.isImage())
                 .viewCount(document.getViewCount())
                 .likeCount(document.getLikeCount())
-                .commentCount(document.getCommentCount)
+                .commentCount(document.getCommentCount())
                 .postStatus(document.getPostStatus())
                 .createdAt(document.getCreatedAt())
                 .build();

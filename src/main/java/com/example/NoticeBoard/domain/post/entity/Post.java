@@ -27,6 +27,8 @@ public class Post {
     @Column(name = "user_id", nullable = false)
     private Long userId;  // 게시글 작성자 id
 
+    private String nickname; // 스냅샷 필드
+
     @Column(nullable = false, length = 100)
     private String title; // 게시글 제목
 

@@ -1,9 +1,10 @@
 package com.example.NoticeBoard.domain.post.controller;
 
+import com.example.NoticeBoard.domain.post.service.PostCommandService;
 import com.example.NoticeBoard.global.security.CustomUserDetails;
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
-import com.example.NoticeBoard.domain.post.service.PostService;
+import com.example.NoticeBoard.domain.post.service.PostQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class PostController {
 
-    private final PostService postService;
+    private final PostQueryService postQueryService;
+    private final PostCommandService postCommandService;
 
     // 게시글 작성
     @PostMapping("/create")
@@ -28,7 +30,7 @@ public class PostController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody PostRequestDto postRequestDto){
         log.info("게시글 작성 요청: userId={}, category={}", userDetails.getId(), postRequestDto.getCategory());
-        return ResponseEntity.ok(postService.createPost(userDetails.getId(), postRequestDto));
+        return ResponseEntity.ok(postCommandService.createPost(userDetails.getId(), postRequestDto));
     }
 
     // 게시글 수정
@@ -38,7 +40,7 @@ public class PostController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody PostRequestDto postRequestDto){
         log.info("게시글 수정 요청: postId={}, userId={}", postId, userDetails.getId());
-        return ResponseEntity.ok(postService.updatePost(postId, userDetails.getId(), postRequestDto));
+        return ResponseEntity.ok(postCommandService.updatePost(postId, userDetails.getId(), postRequestDto));
     }
 
     // 게시글 삭제
@@ -47,7 +49,7 @@ public class PostController {
             @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails){
         log.info("게시글 삭제 요청: postId={}, userId={}", postId, userDetails.getId());
-        postService.deletePost(postId, userDetails.getId());
+        postCommandService.deletePost(postId, userDetails.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -55,8 +57,8 @@ public class PostController {
     @GetMapping("/find/{postId}")
     public ResponseEntity<PostResponseDto> getPostDetail(@PathVariable Long postId){
         log.info("게시글 상세 조회: postId={}", postId);
-        postService.incrementViewCount(postId);
-        return ResponseEntity.ok(postService.getPostDetail(postId));
+        postQueryService.incrementViewCount(postId);
+        return ResponseEntity.ok(postQueryService.getPostDetail(postId));
     }
 
     // 게시글 조회(전체 최신순)
@@ -65,7 +67,7 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size){
         log.info("최신 게시글 조회: page={}, size={}", page, size);
-        return ResponseEntity.ok(postService.findAllPosts(page,size));
+        return ResponseEntity.ok(postQueryService.findAllPosts(page,size));
     }
 
     // 게시글 검색 (제목, 내용, 제목 + 내용, 작성자)
@@ -75,7 +77,7 @@ public class PostController {
             @RequestParam(defaultValue = "titleAndContent") String type,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable){
         log.info("게시글 검색: keyword={}, type={}", keyword, type);
-        return ResponseEntity.ok(postService.searchPosts(keyword, type, pageable));
+        return ResponseEntity.ok(postQueryService.searchPosts(keyword, type, pageable));
     }
 
 
