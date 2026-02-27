@@ -131,22 +131,16 @@ public class PostCommandService {
         log.info("게시글 삭제 완료: postId={}, userId={}", postId, userId);
     }
 
-    // 조회수 증가
-    public void incrementViewCount(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-
-        post.incrementViewCount();
-        log.debug("조회수 증가: postId={}, viewCount={}", postId, post.getViewCount());
-    }
-
     private void sendEvent(Long postId, String type){
         PostEvent event = new PostEvent(postId, type);
         kafkaTemplate.send(TOPIC, String.valueOf(postId), event)
-                .addCallback(
-                        result -> log.info("Kafka 전송 성공: postId={}, type={}", postId, type),
-                        ex -> log.error("Kafka 전송 실패: postId={}, type={}, error={}", postId, type, ex.getMessage())
-                );
+                .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Kafka 전송 성공: postId={}, type={}", postId, type);
+                        } else {
+                            log.error("Kafka 전송 실패: postId={}, type={}, error={}", postId, type, ex.getMessage());
+                        }
+                        });
     }
 
     // Redis 캐시 삭제 - 데이터가 수정되거나 삭제되면 캐시를 제거해서 데이터 불일치를 방지시킴.
