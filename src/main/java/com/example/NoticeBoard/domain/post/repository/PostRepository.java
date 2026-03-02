@@ -15,9 +15,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // User의 게시글 목록 조회
     List<Post> findByUserId(Long userId);
 
-    // 특정 상태의 게시글 수
-    Long countByPostStatus(PostStatus status);
-
     // 특정 상태의 게시글 조회
     Page<Post> findByPostStatus(PostStatus postStatus, Pageable pageable);
+
+    // 게시글 좋아요 수 증가
+    void incrementLikeCount(Long postId);
+
+    // 게시글 좋아요 취소
+    void decrementLikeCount(Long postId);
 }

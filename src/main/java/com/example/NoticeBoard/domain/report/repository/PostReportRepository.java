@@ -12,10 +12,13 @@ import java.util.List;
 public interface PostReportRepository  extends JpaRepository<PostReport, Long> {
 
     // 회원이 해당 게시글을 신고한 적 있는지
-    boolean existsByPostIdAndUserId(Long postId, Long userId);
+    boolean existsByPostIdAndUserId (Long postId, Long userId);
 
     // 특정 기간의 신고 조회
-    List<PostReport> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<PostReport> findByCreatedAtBetween (LocalDateTime startDate, LocalDateTime endDate);
+
+    // 게시글이 신고된 수 카운트
+    Long countByPostId (Long postId);
 
     // 특정 기간 신고 수 카운트
     Long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);

@@ -22,13 +22,11 @@ public class PostReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 내부 PK
 
-    @ManyToOne
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post; // 신고 당한 게시글 id (Post PK)
+    @Column(name = "post_id", nullable = false)
+    private Long postId; // 신고 당한 게시글 id
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user; // 신고한 사람의 id (User PK)
+    @Column(name = "user_id", nullable = false)
+    private Long userId; // 신고한 사람의 id
 
     @NotBlank
     @Column(columnDefinition = "TEXT", nullable = false, updatable = false)
