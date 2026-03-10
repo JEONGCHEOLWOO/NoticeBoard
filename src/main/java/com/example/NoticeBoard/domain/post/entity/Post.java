@@ -45,14 +45,14 @@ public class Post {
     @Column(name = "post_status", nullable = false, length = 10)
     private PostStatus postStatus; // 게시글 종류 (일반 게시글, 비밀 게시글, 삭제된 게시글, 블라인드된 게시글 등)
 
-    @Column(nullable = false)
-    private Integer viewCount = 0; // 조회수
+    @Column(name = "view_count", nullable = false)
+    private long viewCount = 0L; // 조회수
 
     @Column(name = "comment_count", nullable = false)
-    private Integer commentCount =0;
+    private long commentCount = 0L;
 
-    @Column(nullable = false)
-    private Integer likeCount = 0; // 좋아요 수 -> 캐시 용도
+    @Column(name = "like_count", nullable = false)
+    private long likeCount = 0L; // 좋아요 수 -> 캐시 용도
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -66,18 +66,10 @@ public class Post {
     // ------------------비즈니스 메소드-------------------
     // 게시글 수정
     public void update(String title, String content, Category category, PostStatus postStatus) {
-        if (title != null && !title.isBlank()) {
-            this.title = title;
-        }
-        if (content != null && !content.isBlank()) {
-            this.content = content;
-        }
-        if (category != null) {
-            this.category = category;
-        }
-        if (postStatus != null){
-            this.postStatus = postStatus;
-        }
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.postStatus = postStatus;
     }
 
     // 게시글 삭제 (Soft Delete)
@@ -89,11 +81,6 @@ public class Post {
     // 삭제된 게시글인지 확인
     public boolean isDeleted() {
         return this.postStatus == PostStatus.DELETED || this.deletedAt != null;
-    }
-
-    // 조회수 증가
-    public void incrementViewCount() {
-        this.viewCount++;
     }
 
     // 좋아요수 증가

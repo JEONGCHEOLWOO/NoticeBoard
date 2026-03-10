@@ -4,6 +4,7 @@ import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.dto.PostSearchResponseDto;
 import com.example.NoticeBoard.domain.post.entity.PostSearchDocument;
 import com.example.NoticeBoard.domain.post.entity.Post;
+import com.example.NoticeBoard.domain.post.event.ViewCountProducer;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.post.repository.PostSearchRepository;
 import com.example.NoticeBoard.global.enumeration.PostStatus;
@@ -27,7 +28,9 @@ import java.time.Duration;
 public class PostQueryService {
     private final PostRepository postRepository;
     private final PostSearchRepository postSearchRepository;
+
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ViewCountProducer viewCountProducer;
 
     // Pageable 생성 헬퍼 메소드
     private Pageable createPageable(int page, int size){
@@ -112,12 +115,14 @@ public class PostQueryService {
                 .build());
     }
 
-    // 조회수 증가
+    // 조회수 증가 - kafka + redis 이용
     public void incrementViewCount(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-
-        post.incrementViewCount();
-        log.debug("조회수 증가: postId={}, viewCount={}", postId, post.getViewCount());
+        viewCountProducer.sendViewEvent(postId);
     }
+
+    //    // 조회수 증가 - Redis만 이용
+//    public void incrementViewCount(Long postId) {
+//        String key = "post:view:" + postId;
+//        redisTemplate.opsForValue().increment(key);
+//    }
 }

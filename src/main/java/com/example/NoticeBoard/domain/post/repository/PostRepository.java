@@ -23,4 +23,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 게시글 좋아요 취소
     void decrementLikeCount(Long postId);
+
+    void incrementViewCount(Long postId, Integer count);
 }

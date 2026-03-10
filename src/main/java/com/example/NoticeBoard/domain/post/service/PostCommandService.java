@@ -3,7 +3,7 @@ package com.example.NoticeBoard.domain.post.service;
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.post.entity.PostEvent;
+import com.example.NoticeBoard.domain.post.event.PostEventProducer;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
@@ -11,7 +11,6 @@ import com.example.NoticeBoard.global.enumeration.PostStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @Slf4j
 public class PostCommandService {
+
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final KafkaTemplate<String, PostEvent> kafkaTemplate;
-    private final RedisTemplate<String, Object> redisTemplate;
 
-    private static final String TOPIC = "post-events";
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final PostEventProducer postEventProducer;
 
     // kafka는 데이터의 상태가 변하는 시점에 사용됨 -> CUD(Create, Update, Delete)로직이 완료된 직후에 호출
     // 데이터 동기화가 필요한 메소드에 주로 들어감. 단순 조회(Read) 메소드엔 들어가지 않음.
@@ -54,18 +53,17 @@ public class PostCommandService {
                 .build();
 
         Post savedPost = postRepository.save(post);
-        PostResponseDto response = PostResponseDto.fromEntity(savedPost);
 
-        // Kafka 이벤트 생성
-        sendEvent(savedPost.getId(), "CREATE");
+        postEventProducer.sendPostCreatedEvent(savedPost.getId());
 
         log.info("게시글 생성 완료: postId={}, userId={}", savedPost.getId(), userId);
 
-        return response;
+        return PostResponseDto.fromEntity(savedPost);
     }
 
     // 게시글 수정 - 본인이 작성한 게시글 일때만 수정 버튼 생성 및 수정 가능
     public PostResponseDto updatePost(Long postId, Long userId, PostRequestDto requestDto){
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(()-> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
@@ -97,21 +95,19 @@ public class PostCommandService {
             post.setFileUri(requestDto.getFileUri());
         }
 
-        PostResponseDto response = PostResponseDto.fromEntity(post);
-
-        // Kafka 이벤트 생성
-        sendEvent(post.getId(), "UPDATE");
+        postEventProducer.sendPostUpdateEvent(postId);
 
         // Redis 기존 캐시 삭제
         evictPostCache(postId);
 
         log.info("게시글 수정 완료: postId={}, userId={}", postId, userId);
 
-        return response;
+        return PostResponseDto.fromEntity(post);
     }
 
     // 게시글 삭제 (Soft Delete)
     public void deletePost(Long postId, Long userId){
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(()-> new RuntimeException("해당 게시글을 찾을 수 없습니다."));
 
@@ -122,25 +118,12 @@ public class PostCommandService {
 
         post.delete();
 
-        // Kafka 이벤트 생성
-        sendEvent(postId, "DELETE");
+        postEventProducer.sendPostDeleteEvent(postId);
 
         // Redis 캐시 삭제
         evictPostCache(postId);
 
         log.info("게시글 삭제 완료: postId={}, userId={}", postId, userId);
-    }
-
-    private void sendEvent(Long postId, String type){
-        PostEvent event = new PostEvent(postId, type);
-        kafkaTemplate.send(TOPIC, String.valueOf(postId), event)
-                .whenComplete((result, ex) -> {
-                        if (ex == null) {
-                            log.info("Kafka 전송 성공: postId={}, type={}", postId, type);
-                        } else {
-                            log.error("Kafka 전송 실패: postId={}, type={}, error={}", postId, type, ex.getMessage());
-                        }
-                        });
     }
 
     // Redis 캐시 삭제 - 데이터가 수정되거나 삭제되면 캐시를 제거해서 데이터 불일치를 방지시킴.

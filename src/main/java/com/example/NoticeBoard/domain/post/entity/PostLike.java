@@ -19,13 +19,15 @@ public class PostLike {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 내부 PK
 
-    @JoinColumn(name = "post_id", nullable = false)
+    @Column(name = "post_id", nullable = false)
     private Long postId; // 게시글 id
 
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId; // 좋아요를 누른 사람의 id
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt; // 좋아요를 누른 시간 -> 추후 "최근 좋아요가 많은 게시글" 같은 기준을 만들때 필요. 현재는 필요X
+
+    private LocalDateTime deleteAt; // 좋아요 취소
 }
