@@ -1,11 +1,9 @@
 package com.example.NoticeBoard.domain.post.service;
 
-import com.example.NoticeBoard.domain.post.entity.PostLike;
-import com.example.NoticeBoard.domain.post.repository.PostLikeRepository;
+import com.example.NoticeBoard.domain.post.event.PostLikeProducer;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,19 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-@Slf4j
 public class PostLikeService {
 
     private final PostRepository postRepository;
-    private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
+
     private final StringRedisTemplate redisTemplate;
+    private final PostLikeProducer postLikeProducer;
 
     // 게시글 좋아요
     public void likePost(Long postId, Long userId) {
 
-        String userLikeKey = "post:like:users:" + postId;
-        boolean isNew = redisTemplate.opsForSet().add(userLikeKey, userId.toString()) == 1;
         if(!postRepository.existsById(postId)) {
             throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다.");
         }
@@ -34,35 +30,31 @@ public class PostLikeService {
             throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
         }
 
+        String key = "post:like:" + postId;
+        boolean isNew = redisTemplate.opsForSet().add(key, userId.toString()) == 1;
+
         if(!isNew){
             throw new IllegalArgumentException("이미 좋아요를 눌렀습니다.");
         }
 
-        String likeCountKey = "post:like:count:" + postId;
-        redisTemplate.opsForValue().increment(likeCountKey);
-
-//        PostLike postLike = PostLike.builder()
-//                .postId(postId)
-//                .userId(userId)
-//                .build();
-//
-//        postLikeRepository.save(postLike);
-//
-//        postRepository.incrementLikeCount(postId);
+        postLikeProducer.sendLikeEvent(postId);
     }
 
     // 게시글 좋아요 취소
     public void unlikePost(Long postId, Long userId) {
 
-        if(!postRepository.existsById(postId)) {
+        if (!postRepository.existsById(postId)) {
             throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다.");
         }
 
-        PostLike postLike = postLikeRepository.findByPostIdAndUserId(postId, userId)
-                .orElseThrow(() -> new IllegalStateException("좋아요 기록이 없습니다."));
+        String key = "post:like:" + postId;
 
-        postLikeRepository.delete(postLike);
+        boolean exists = redisTemplate.opsForSet().remove(key, userId.toString()) == 1;
 
-        postRepository.decrementLikeCount(postId);
+        if(!exists) {
+            throw new IllegalStateException("좋아요 기록이 없습니다.");
+        }
+
+        postLikeProducer.sendUnlikeEvent(postId);
     }
 }

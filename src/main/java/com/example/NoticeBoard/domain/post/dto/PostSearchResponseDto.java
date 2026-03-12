@@ -19,9 +19,9 @@ public class PostSearchResponseDto {
     private Long userId; // 게시글 작성자 - User 정보 조회용
     private String nickname; // 게시글 작성자 닉네임
     private Boolean image; // 게시글에 이미지 존재 여부(리스트에 표시하기 위함)
-    private Integer viewCount; // 조회수
-    private Integer likeCount; // 게시글 좋아요 수
-    private Integer commentCount; // 댓글수
+    private Long viewCount; // 조회수
+    private Long likeCount; // 게시글 좋아요 수
+    private Long commentCount; // 댓글수
     private PostStatus postStatus; // 게시글 종류(일반 게시글, 비밀 게시글, 삭제된 게시글, 블라인드된 게시글 등)
     private LocalDateTime createdAt; // 게시글 작성 시간
 

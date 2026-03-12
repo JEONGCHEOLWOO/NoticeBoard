@@ -19,10 +19,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findByPostStatus(PostStatus postStatus, Pageable pageable);
 
     // 게시글 좋아요 수 증가
-    void incrementLikeCount(Long postId);
+    void incrementLikeCount(Long postId, int count);
 
-    // 게시글 좋아요 취소
-    void decrementLikeCount(Long postId);
-
+    // 조회수 증가
     void incrementViewCount(Long postId, Integer count);
 }

@@ -34,6 +34,7 @@ public class PostQueryService {
 
     // Pageable 생성 헬퍼 메소드
     private Pageable createPageable(int page, int size){
+
         if(page < 0 || size <= 0){
             throw new IllegalArgumentException("잘못된 페이지 요청입니다.");
         }
@@ -44,6 +45,15 @@ public class PostQueryService {
     // 게시글 조회 (내용)
     @Transactional(readOnly = true)
     public PostResponseDto getPostDetail(Long postId){
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+
+        // 삭제된 게시글 확인
+        if (post.isDeleted()) {
+            throw new IllegalArgumentException("삭제된 게시글입니다.");
+        }
+
         String cacheKey = "post:detail:" + postId;
         PostResponseDto cachedPost = (PostResponseDto) redisTemplate.opsForValue().get(cacheKey);
 
@@ -58,14 +68,6 @@ public class PostQueryService {
         if(cachedPost != null){
             log.info("Redis 캐시 히트: postId={}", postId);
             return cachedPost;
-        }
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
-
-        // 삭제된 게시글 확인
-        if (post.isDeleted()) {
-            throw new IllegalArgumentException("삭제된 게시글입니다.");
         }
 
         PostResponseDto response = PostResponseDto.fromEntity(post);
@@ -119,10 +121,4 @@ public class PostQueryService {
     public void incrementViewCount(Long postId) {
         viewCountProducer.sendViewEvent(postId);
     }
-
-    //    // 조회수 증가 - Redis만 이용
-//    public void incrementViewCount(Long postId) {
-//        String key = "post:view:" + postId;
-//        redisTemplate.opsForValue().increment(key);
-//    }
 }

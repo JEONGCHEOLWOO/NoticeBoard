@@ -45,14 +45,14 @@ public class PostSearchDocument {
     @Field(type = FieldType.Keyword)
     private PostStatus postStatus;
 
-    @Field(type = FieldType.Integer)
-    private Integer viewCount;
+    @Field(type = FieldType.Long)
+    private Long viewCount;
 
-    @Field(type = FieldType.Integer)
-    private Integer likeCount;
+    @Field(type = FieldType.Long)
+    private Long likeCount;
 
-    @Field(type = FieldType.Integer)
-    private Integer commentCount; // 댓글수
+    @Field(type = FieldType.Long)
+    private Long commentCount; // 댓글수
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
     private LocalDateTime createdAt;
