@@ -31,12 +31,15 @@ public class PostLikeService {
         }
 
         String key = "post:like:" + postId;
+        // SADD post:like:postId userId -> SADD post:like:12 3 -> 게시글 12 좋아요 목록에 userId=3 추가
+        // 여기서 Redis의 Set 명령어 SADD(Set Add) 실행. 1이면 새로 추가, 0이면 이미 좋아요가 되어있음.
         boolean isNew = redisTemplate.opsForSet().add(key, userId.toString()) == 1;
 
         if(!isNew){
             throw new IllegalArgumentException("이미 좋아요를 눌렀습니다.");
         }
 
+        // Kafka 이벤트 발행
         postLikeProducer.sendLikeEvent(postId);
     }
 
@@ -48,13 +51,15 @@ public class PostLikeService {
         }
 
         String key = "post:like:" + postId;
-
+        // SREM post:like:postId userId -> SREM post:like:12 3 -> 게시글 12 좋아요 목록에서 userId=3 좋아요 취소
+        // 여기서 Redis의 Set 명령어 SREM(Set Remove) 실행. 1이면 좋아요가 되어 있음, 0이면 좋아요 기록이 없음.
         boolean exists = redisTemplate.opsForSet().remove(key, userId.toString()) == 1;
 
         if(!exists) {
             throw new IllegalStateException("좋아요 기록이 없습니다.");
         }
 
+        // Kafka 이벤트 발행
         postLikeProducer.sendUnlikeEvent(postId);
     }
 }

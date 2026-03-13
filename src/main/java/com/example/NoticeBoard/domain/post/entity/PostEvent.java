@@ -1,6 +1,5 @@
 package com.example.NoticeBoard.domain.post.entity;
 
-import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

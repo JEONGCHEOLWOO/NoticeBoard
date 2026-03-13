@@ -1,5 +1,6 @@
 package com.example.NoticeBoard.domain.post.service;
 
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.dto.PostSearchResponseDto;
 import com.example.NoticeBoard.domain.post.entity.PostSearchDocument;
@@ -55,16 +56,10 @@ public class PostQueryService {
         }
 
         String cacheKey = "post:detail:" + postId;
+        // GET post:detail:postId -> GET post:detail:12 -> 게시글 12의 값을 불러옴
+        // 여기서 Redis의 String 명령어 Get 실행.
         PostResponseDto cachedPost = (PostResponseDto) redisTemplate.opsForValue().get(cacheKey);
 
-//        캐시 히트(Cache Hit)
-//        캐시 히트는 CPU가 필요한 데이터가 캐시에 이미 존재하는 경우를 의미
-//        이 경우, 데이터는 캐시에서 즉시 액세스되며 메인 메모리로 접근할 필요가 없음
-//        결과적으로 데이터 접근 시간이 매우 짧아서 시스템의 전체 성능이 향상
-//        캐시 미스(Cache Miss)
-//        캐시 미스는 CPU가 필요한 데이터가 캐시에 존재하지 않는 경우를 의미
-//        이 경우, 데이터는 메인 메모리에서 가져와야 하며 이 과정에서 캐시에도 해당 데이터가 저장
-//        캐시 미스는 데이터 접근 시간이 길어져 성능 저하를 초래할 수 있음
         if(cachedPost != null){
             log.info("Redis 캐시 히트: postId={}", postId);
             return cachedPost;
