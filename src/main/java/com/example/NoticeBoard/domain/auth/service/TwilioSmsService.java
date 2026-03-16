@@ -5,6 +5,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.stereotype.Service;
 
+// 전화번호 인증을 위해 인증번호를 문자로 발송하는 클래스 - TwilioSMS API
 @Service
 public class TwilioSmsService {
 

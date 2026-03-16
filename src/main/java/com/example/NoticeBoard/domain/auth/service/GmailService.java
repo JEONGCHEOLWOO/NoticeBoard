@@ -17,13 +17,13 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.io.*;
 
+// 아이디 찾기, 비밀번호 찾기에서 이메일 인증을 위한 클래스 - Gmail
 @Service
 public class GmailService {
     private Gmail gmail;
 
     public GmailService() throws Exception {
         Dotenv dotenv = Dotenv.load();
-
         String clientId = dotenv.get("GOOGLE_CLIENT_ID");
         String clientSecret = dotenv.get("GOOGLE_CLIENT_SECRET");
         String refreshToken = dotenv.get("GOOGLE_REFRESH_TOKEN");

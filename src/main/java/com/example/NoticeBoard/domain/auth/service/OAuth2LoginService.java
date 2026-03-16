@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// 소셜 로그인을 위한 클래스 - NAVER, GOOGLE, KAKAO, FACEBOOK
 @Service
 @RequiredArgsConstructor
 public class OAuth2LoginService extends DefaultOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {

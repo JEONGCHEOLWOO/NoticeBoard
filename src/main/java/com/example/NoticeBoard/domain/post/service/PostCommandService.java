@@ -3,7 +3,9 @@ package com.example.NoticeBoard.domain.post.service;
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.entity.Post;
+import com.example.NoticeBoard.domain.post.entity.PostArchive;
 import com.example.NoticeBoard.domain.post.event.PostEventProducer;
+import com.example.NoticeBoard.domain.post.repository.PostArchiveRepository;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
@@ -23,6 +25,7 @@ public class PostCommandService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostArchiveRepository postArchiveRepository;
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final PostEventProducer postEventProducer;
@@ -117,6 +120,9 @@ public class PostCommandService {
         }
 
         post.delete();
+
+        PostArchive archive = PostArchive.from(post);
+        postArchiveRepository.save(archive);
 
         postEventProducer.sendPostDeleteEvent(postId);
 

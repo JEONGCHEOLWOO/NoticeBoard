@@ -10,16 +10,17 @@ import org.springframework.stereotype.Service;
 public class PostEventProducer {
 
     private final KafkaTemplate<String, Long> kafkaTemplate;
+    private static final String TOPIC = "post-event-topic";
 
     public void sendPostCreatedEvent(Long postId){
-        kafkaTemplate.send("post-evnet-topic", postId);
+        kafkaTemplate.send(TOPIC, "CREATE", postId);
     }
 
     public void sendPostUpdateEvent(Long postId){
-        kafkaTemplate.send("post-evnet-topic", postId);
+        kafkaTemplate.send(TOPIC, "UPDATE", postId);
     }
 
     public void sendPostDeleteEvent(Long postId){
-        kafkaTemplate.send("post-evnet-topic", postId);
+        kafkaTemplate.send(TOPIC, "DELETE", postId);
     }
 }

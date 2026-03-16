@@ -1,6 +1,5 @@
 package com.example.NoticeBoard.domain.post.service;
 
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.dto.PostSearchResponseDto;
 import com.example.NoticeBoard.domain.post.entity.PostSearchDocument;
@@ -47,6 +46,11 @@ public class PostQueryService {
     @Transactional(readOnly = true)
     public PostResponseDto getPostDetail(Long postId){
 
+        String cacheKey = "post:detail:" + postId;
+        // GET post:detail:postId -> GET post:detail:12 -> 게시글 12의 값을 불러옴
+        // 여기서 Redis의 String 명령어 Get 실행.
+        PostResponseDto cachedPost = (PostResponseDto) redisTemplate.opsForValue().get(cacheKey);
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
 
@@ -54,11 +58,6 @@ public class PostQueryService {
         if (post.isDeleted()) {
             throw new IllegalArgumentException("삭제된 게시글입니다.");
         }
-
-        String cacheKey = "post:detail:" + postId;
-        // GET post:detail:postId -> GET post:detail:12 -> 게시글 12의 값을 불러옴
-        // 여기서 Redis의 String 명령어 Get 실행.
-        PostResponseDto cachedPost = (PostResponseDto) redisTemplate.opsForValue().get(cacheKey);
 
         if(cachedPost != null){
             log.info("Redis 캐시 히트: postId={}", postId);

@@ -19,8 +19,6 @@ import java.time.LocalDateTime;
 public class PostSearchDocument {
 
     @Id
-    private String id; // Elasticsearch의 Id
-
     @Field(type = FieldType.Long)
     private Long postId; // 게시글 Id
 
@@ -56,4 +54,21 @@ public class PostSearchDocument {
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
     private LocalDateTime createdAt;
+
+    public static PostSearchDocument from(Post post){
+        return PostSearchDocument.builder()
+                .postId(post.getId())
+                .userId(post.getUserId())
+                .category(post.getCategory())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .nickname(post.getNickname())
+                .image(post.getImageUri() != null)
+                .postStatus(post.getPostStatus())
+                .viewCount(post.getViewCount())
+                .likeCount(post.getLikeCount())
+                .commentCount(post.getCommentCount())
+                .createdAt(post.getCreatedAt())
+                .build();
+    }
 }
