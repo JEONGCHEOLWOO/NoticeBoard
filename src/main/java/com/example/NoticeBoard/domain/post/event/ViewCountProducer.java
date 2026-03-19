@@ -9,10 +9,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ViewCountProducer {
 
-    private final KafkaTemplate<String, Long> kafkaTemplate;
+    public final KafkaTemplate<String, Long> kafkaTemplate;
+
+    public static final String POST_VIEW_TOPIC = "post-view-topic";
 
     // PostCommandService에서 '게시글 조회 발생' 이벤트를 kafka에 보내면 Topic에 메세지를 발행 및 저장 
     public void sendViewEvent(Long postId){
-        kafkaTemplate.send("post-veiw-topic", postId);
+        kafkaTemplate.send(POST_VIEW_TOPIC, postId);
     }
 }

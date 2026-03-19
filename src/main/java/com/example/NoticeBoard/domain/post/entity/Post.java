@@ -82,24 +82,4 @@ public class Post {
     public boolean isDeleted() {
         return this.postStatus == PostStatus.DELETED || this.deletedAt != null;
     }
-
-    // 좋아요수 증가
-    public void incrementLikeCount(){
-        this.likeCount++;
-    }
-
-    // 좋아요수 감소
-    public void decrementLikeCount(){
-        if (this.likeCount >0) this.likeCount--;
-    }
-
-    // 댓글수 증가
-    public void incrementCommentCount(){
-        this.commentCount++;
-    }
-
-    // 댓글수 감소
-    public void decrementCommentCount(){
-        if (this.commentCount > 0) this.commentCount--;
-    }
 }

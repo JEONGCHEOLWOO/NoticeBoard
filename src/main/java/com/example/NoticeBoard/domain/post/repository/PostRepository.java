@@ -5,8 +5,11 @@ import com.example.NoticeBoard.global.enumeration.PostStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,4 +26,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 조회수 증가
     void incrementViewCount(Long postId, Integer count);
+
+    @Modifying
+    @Query("""
+    SELECT p.id
+    FROM Post p
+    WHERE p.postStatus = 'DELETED'
+    AND p.deletedAt < :deletereqday
+    """)
+    List<Long> findDeletedPostIdsBefore(LocalDateTime deletereqday);
 }

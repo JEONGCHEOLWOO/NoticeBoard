@@ -9,13 +9,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PostLikeProducer {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    public final KafkaTemplate<String, String> kafkaTemplate;
+
+    public static final String POST_LIKE_TOPIC = "post-like-topic";
 
     public void sendLikeEvent(Long postId) {
-        kafkaTemplate.send("post-like-topic", postId + ":LIKE");
+        kafkaTemplate.send(POST_LIKE_TOPIC, postId + ":LIKE");
     }
 
     public void sendUnlikeEvent(Long postId) {
-        kafkaTemplate.send("post-like-topic", postId + ":UNLIKE");
+        kafkaTemplate.send(POST_LIKE_TOPIC, postId + ":UNLIKE");
     }
 }

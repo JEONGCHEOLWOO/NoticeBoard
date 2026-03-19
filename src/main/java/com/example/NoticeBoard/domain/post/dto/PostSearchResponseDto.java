@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 // 게시글 검색 및 초기 페이지 응답 Dto
 public class PostSearchResponseDto {
-    private String id; // 내부 PK (식별자)
+    private Long id; // 내부 PK (식별자)
     private Category category; // 카테고리
     private String title; // 게시글 제목
     private Long postId; // 게시글 Id
@@ -27,7 +27,7 @@ public class PostSearchResponseDto {
 
     public static PostSearchResponseDto fromEntity(PostSearchDocument document) {
         return PostSearchResponseDto.builder()
-                .id(document.getId()) // Elasticsearch Id
+                .id(document.getPostId())
                 .category(document.getCategory())
                 .title(document.getTitle())
                 .userId(document.getUserId())

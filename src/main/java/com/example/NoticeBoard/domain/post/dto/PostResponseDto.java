@@ -20,9 +20,9 @@ public class PostResponseDto {
 
     private String content; // 게시글 내용
 
-    private Integer viewCount; // 조회수
+    private Long viewCount; // 조회수
 
-    private Integer likeCount; // 게시글 좋아요 수
+    private Long likeCount; // 게시글 좋아요 수
 
     private PostStatus postStatus; // 게시글 종류(일반 게시글, 비밀 게시글, 삭제된 게시글, 블라인드된 게시글 등)
 

@@ -3,9 +3,7 @@ package com.example.NoticeBoard.domain.post.service;
 import com.example.NoticeBoard.domain.post.dto.PostRequestDto;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.post.entity.PostArchive;
 import com.example.NoticeBoard.domain.post.event.PostEventProducer;
-import com.example.NoticeBoard.domain.post.repository.PostArchiveRepository;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
@@ -25,10 +23,11 @@ public class PostCommandService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final PostArchiveRepository postArchiveRepository;
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final PostEventProducer postEventProducer;
+
+    public static final String POST_DETAIL = "post:detail:";
 
     // kafka는 데이터의 상태가 변하는 시점에 사용됨 -> CUD(Create, Update, Delete)로직이 완료된 직후에 호출
     // 데이터 동기화가 필요한 메소드에 주로 들어감. 단순 조회(Read) 메소드엔 들어가지 않음.
@@ -98,10 +97,11 @@ public class PostCommandService {
             post.setFileUri(requestDto.getFileUri());
         }
 
-        postEventProducer.sendPostUpdateEvent(postId);
-
         // Redis 기존 캐시 삭제
         evictPostCache(postId);
+
+        // kafka 이벤트 생성
+        postEventProducer.sendPostUpdateEvent(postId);
 
         log.info("게시글 수정 완료: postId={}, userId={}", postId, userId);
 
@@ -119,21 +119,20 @@ public class PostCommandService {
             throw new IllegalArgumentException("본인이 작성한 게시글만 삭제할 수 있습니다.");
         }
 
+        // 비즈니스 메소드 - postStatus 를 NORMAL -> DELETED 변경
         post.delete();
-
-        PostArchive archive = PostArchive.from(post);
-        postArchiveRepository.save(archive);
-
-        postEventProducer.sendPostDeleteEvent(postId);
 
         // Redis 캐시 삭제
         evictPostCache(postId);
+
+        // Kafka 이벤트 생성
+        postEventProducer.sendPostDeleteEvent(postId);
 
         log.info("게시글 삭제 완료: postId={}, userId={}", postId, userId);
     }
 
     // Redis 캐시 삭제 - 데이터가 수정되거나 삭제되면 캐시를 제거해서 데이터 불일치를 방지시킴.
     private void evictPostCache(Long postId){
-        redisTemplate.delete("post:detail:" + postId);
+        redisTemplate.delete(POST_DETAIL + postId);
     }
 }
