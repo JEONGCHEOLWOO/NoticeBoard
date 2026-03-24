@@ -23,7 +23,8 @@ public class PostQueryController {
     // 게시글 조회 (내용)
     @GetMapping("/find/{postId}")
     public ResponseEntity<PostResponseDto> getPostDetail(@PathVariable Long postId){
-        log.info("게시글 상세 조회: postId={}", postId);
+        log.info("게시글 상세 조회 요청: postId={}", postId);
+        log.info("게시글 조회수 증가 요청: postId={}", postId);
         postQueryService.incrementViewCount(postId);
         return ResponseEntity.ok(postQueryService.getPostDetail(postId));
     }
@@ -33,7 +34,7 @@ public class PostQueryController {
     public ResponseEntity<Page<PostSearchResponseDto>> findAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size){
-        log.info("최신 게시글 조회: page={}, size={}", page, size);
+        log.info("전체 게시글 조회 요청: page={}, size={}", page, size);
         return ResponseEntity.ok(postQueryService.findAllPosts(page,size));
     }
 
@@ -43,7 +44,7 @@ public class PostQueryController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "titleAndContent") String type,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable){
-        log.info("게시글 검색: keyword={}, type={}", keyword, type);
+        log.info("게시글 검색 요청: keyword={}, type={}", keyword, type);
         return ResponseEntity.ok(postQueryService.searchPosts(keyword, type, pageable));
     }
 

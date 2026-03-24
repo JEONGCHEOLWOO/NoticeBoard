@@ -64,12 +64,14 @@ public class PostQueryService {
             return cachedPost;
         }
 
+        log.info("Redis 캐시 미스: DB 조회 진행 postId={}", postId);
+
         PostResponseDto response = PostResponseDto.fromEntity(post);
 
         // Redis에 캐시 저장
         redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
 
-        log.info("게시글 조회 완료: postId={}", postId);
+        log.info("게시글 상세 조회 완료: postId={}", postId);
 
         return response;
     }
@@ -80,9 +82,11 @@ public class PostQueryService {
     // 찾아보니 확실히 성능 개선에 대해서는 이점이 있지만, 추가 쿼리로 인해 DB의 네트워크 요청 건수 또한 최대 6배까지 늘어날 수 있어 비용이 많이 들 수 있기 때문에, 단건 조회(update, insert)요청 메소드에서는 사용하지 않는 것을 추천한다고 한다.
     @Transactional(readOnly = true)
     public Page<PostSearchResponseDto> searchPosts(String keyword, String type, Pageable pageable){
-        log.info("게시글 검색: keyword={}, type={}", keyword, type);
-
+        
         Page<PostSearchDocument> documents = postSearchRepository.searchByCondition(keyword, type, pageable);
+        
+        log.info("게시글 검색 완료: keyword={}, 결과 개수={}, totalElements={}", keyword, documents.getNumberOfElements(), documents.getTotalElements());
+        
         return documents.map(PostSearchResponseDto::fromEntity);
     }
 
@@ -95,8 +99,10 @@ public class PostQueryService {
 
         Page<Post> posts = postRepository.findByPostStatus(PostStatus.NORMAL, pageable);
 
+        log.info("전체 게시글 조회 완료: page={}, 조회 개수={}, totalElements={}", page, posts.getNumberOfElements(), posts.getTotalElements());
+
         return posts.map(post -> PostSearchResponseDto.builder()
-                .id(String.valueOf(post.getId()))
+                .id(post.getId())
                 .postId(post.getId())
                 .userId(post.getUserId())
                 .category(post.getCategory())
@@ -114,5 +120,6 @@ public class PostQueryService {
     // 조회수 증가 - kafka + redis 이용
     public void incrementViewCount(Long postId) {
         viewCountProducer.sendViewEvent(postId);
+        log.info("게시글 조회수 증가 완료: postId={}", postId);
     }
 }

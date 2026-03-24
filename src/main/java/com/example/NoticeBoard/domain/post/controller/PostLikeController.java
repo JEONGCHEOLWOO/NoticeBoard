@@ -21,6 +21,7 @@ public class PostLikeController {
     public ResponseEntity<Void> likePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails){
+        log.info("게시글 좋아요 요청: postId={}, userId={}", postId, userDetails.getId());
         postLikeService.likePost(postId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
@@ -30,6 +31,7 @@ public class PostLikeController {
     public ResponseEntity<Void> unlikePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails){
+        log.info("게시글 좋아요 요청 취소: postId={}, userId={}", postId, userDetails.getId());
         postLikeService.unlikePost(postId, userDetails.getId());
         return ResponseEntity.ok().build();
     }

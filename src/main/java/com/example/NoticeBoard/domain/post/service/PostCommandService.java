@@ -57,7 +57,6 @@ public class PostCommandService {
         Post savedPost = postRepository.save(post);
 
         postEventProducer.sendPostCreatedEvent(savedPost.getId());
-
         log.info("게시글 생성 완료: postId={}, userId={}", savedPost.getId(), userId);
 
         return PostResponseDto.fromEntity(savedPost);
@@ -102,7 +101,6 @@ public class PostCommandService {
 
         // kafka 이벤트 생성
         postEventProducer.sendPostUpdateEvent(postId);
-
         log.info("게시글 수정 완료: postId={}, userId={}", postId, userId);
 
         return PostResponseDto.fromEntity(post);
@@ -127,7 +125,6 @@ public class PostCommandService {
 
         // Kafka 이벤트 생성
         postEventProducer.sendPostDeleteEvent(postId);
-
         log.info("게시글 삭제 완료: postId={}, userId={}", postId, userId);
     }
 

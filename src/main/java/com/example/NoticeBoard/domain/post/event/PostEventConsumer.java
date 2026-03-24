@@ -24,7 +24,7 @@ public class PostEventConsumer {
     @KafkaListener(topics = "post-event-topic", groupId = "post-group", concurrency = "3")
     public void consume(PostEvent event){
 
-        log.info("kafka 이벤트 수신 type={}", event.getEventType());
+        log.info("게시글 CUD kafka 이벤트 수신 type={}", event.getEventType());
         
         switch (event.getEventType()){
             case "CREATE":

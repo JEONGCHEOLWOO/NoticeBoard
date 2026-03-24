@@ -5,6 +5,7 @@ import com.example.NoticeBoard.domain.post.event.PostLikeProducer;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.global.enumeration.PostStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class PostLikeService {
 
     private final PostRepository postRepository;
@@ -42,6 +44,7 @@ public class PostLikeService {
 
         // Kafka 이벤트 발행
         postLikeProducer.sendLikeEvent(postId);
+        log.info("게시글 좋아요 완료: postId={}, userId={}", postId, userId);
     }
 
     // 게시글 좋아요 취소
@@ -65,5 +68,6 @@ public class PostLikeService {
 
         // Kafka 이벤트 발행
         postLikeProducer.sendUnlikeEvent(postId);
+        log.info("게시글 좋아요 취소 완료: postId={}, userId={}", postId, userId);
     }
 }
