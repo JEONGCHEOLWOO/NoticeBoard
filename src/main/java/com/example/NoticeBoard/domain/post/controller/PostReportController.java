@@ -23,6 +23,7 @@ public class PostReportController {
             @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody PostReportRequestDto postReportRequestDto){
+        log.info("게시글 신고 요청: postId={}, userId={}", postId, userDetails.getId());
         postReportService.reportPost(postId, userDetails.getId(), postReportRequestDto);
         return ResponseEntity.ok().build();
     }

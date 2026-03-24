@@ -27,6 +27,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 조회수 증가
     void incrementViewCount(Long postId, Integer count);
 
+    // 사용자가 삭제 요청을 한 후 30일이 지나 DB에서 데이터 삭제 (Hard Delete)
     @Modifying
     @Query("""
     SELECT p.id
