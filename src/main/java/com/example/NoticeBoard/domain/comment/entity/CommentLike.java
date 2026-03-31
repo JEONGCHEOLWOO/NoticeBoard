@@ -19,13 +19,15 @@ public class CommentLike {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 내부 PK
 
-    @JoinColumn(name = "comment_id", nullable = false)
+    @Column(name = "comment_id", nullable = false)
     private Long commentId; // 댓글 id
 
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId; // 좋아요를 누른 사람의 id
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt; // 좋아요를 가장 많이 받은 댓글 조회시 필요. 현재는 X
+
+    private LocalDateTime deleteAt; // 좋아요 취소
 }

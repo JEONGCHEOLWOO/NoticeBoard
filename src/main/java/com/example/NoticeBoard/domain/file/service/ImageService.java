@@ -22,7 +22,7 @@ public class ImageService {
     public String upload(MultipartFile file, UploadContext context){
 
         // 이미지 정책 검사
-        imageValidator.validate(file, context);
+        ImageValidator.validate(file, context);
 
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         Path path = Paths.get("uploads", fileName);

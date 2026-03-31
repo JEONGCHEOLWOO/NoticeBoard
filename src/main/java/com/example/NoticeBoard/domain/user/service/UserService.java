@@ -280,20 +280,21 @@ public class UserService {
         return String.format("%06d", new Random().nextInt(999999));
     }
 
-    // 사용자 상세 정보 조회
-    public UserDetailDto getUserDetail(Long userId){
+    // 사용자 상세 정보 조회 - 사용자가 프로필을 누르면 나오는 화면(사용자 정보 + 내가 게시한 게시글, 댓글, 게시글 수, 댓글 수)
+        public UserResponseDto getUserDetail(Long userId){
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(()-> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        List<Post> posts = postRepository.findByUserId(userId);
-        List<Comment> comments = commentRepository.findByUserId(userId);
-
-        return UserDetailDto.builder()
-                .user(user)
-                .posts(posts)
-                .comments(comments)
-                .postCount(posts.size())
-                .commentCount(comments.size())
+        // 수정 필요(생각해 보고 무엇이 필요할지 고민)
+        return UserResponseDto.builder()
+                .loginId(user.getLoginId())
+                .sex(user.getSex())
+                .email(user.getEmail())
+                .birthdate(user.getBirthDate())
+                .nickname(user.getNickname())
+                .username(user.getUsername())
                 .build();
     }
+
+    // 사용자 정보 수정
 }

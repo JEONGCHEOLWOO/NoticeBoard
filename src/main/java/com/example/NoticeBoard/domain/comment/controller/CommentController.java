@@ -4,7 +4,7 @@ import com.example.NoticeBoard.global.security.CustomUserDetails;
 import com.example.NoticeBoard.domain.report.dto.CommentReportRequestDto;
 import com.example.NoticeBoard.domain.comment.dto.CommentRequestDto;
 import com.example.NoticeBoard.domain.comment.dto.CommentResponseDto;
-import com.example.NoticeBoard.domain.comment.service.CommentService;
+import com.example.NoticeBoard.domain.comment.service.CommentCommandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CommentController {
 
-    private final CommentService commentService;
+    private final CommentCommandService commentCommandService;
 
     // 댓글 생성
     // postId는 PathVariable로, userdetails는 AuthenticationPrincipal로, commentRequestDto는 RequestBody로 받은 이유는
@@ -25,24 +25,26 @@ public class CommentController {
             @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CommentRequestDto commentRequestDto){
-        return ResponseEntity.ok(commentService.createComment(postId, userDetails.getId(), commentRequestDto));
+        return ResponseEntity.ok(commentCommandService.createComment(postId, userDetails.getId(), commentRequestDto));
     }
 
     // 댓글 수정
     @PostMapping("/update/{commentId}")
     public ResponseEntity<CommentResponseDto> updateComment(
+            @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CommentRequestDto commentRequestDto) {
-        return ResponseEntity.ok(commentService.updateComment(commentId, userDetails.getId(), commentRequestDto));
+        return ResponseEntity.ok(commentCommandService.updateComment(postId, commentId, userDetails.getId(), commentRequestDto));
     }
 
     // 댓글 삭제
     @DeleteMapping("/delete/{commentId}")
     public ResponseEntity<Void> deleteComment(
+            @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        commentService.deleteComment(commentId, userDetails.getId());
+        commentCommandService.deleteComment(postId, commentId, userDetails.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -51,7 +53,7 @@ public class CommentController {
     public ResponseEntity<Void> likeComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        commentService.likeComment(commentId, userDetails.getId());
+        commentCommandService.likeComment(commentId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -60,7 +62,7 @@ public class CommentController {
     public ResponseEntity<Void> unlikeComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        commentService.unlikeComment(commentId, userDetails.getId());
+        commentCommandService.unlikeComment(commentId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -70,7 +72,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CommentReportRequestDto commentReportRequestDto) {
-        commentService.reportComment(commentId, userDetails.getId(), commentReportRequestDto);
+        commentCommandService.reportComment(commentId, userDetails.getId(), commentReportRequestDto);
         return ResponseEntity.ok().build();
     }
 }

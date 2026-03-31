@@ -20,7 +20,7 @@ import java.io.*;
 // 아이디 찾기, 비밀번호 찾기에서 이메일 인증을 위한 클래스 - Gmail
 @Service
 public class GmailService {
-    private Gmail gmail;
+    private final Gmail gmail;
 
     public GmailService() throws Exception {
         Dotenv dotenv = Dotenv.load();

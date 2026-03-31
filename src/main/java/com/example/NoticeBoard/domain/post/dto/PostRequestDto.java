@@ -25,7 +25,7 @@ public class PostRequestDto {
     
     private PostStatus postStatus; // 게시글 종류
     
-    private String imageUri;    // 이미지 주소
+    private String imageUrl;    // 이미지 주소
     
-    private String fileUri;     // 파일 주소
+    private String fileUrl;     // 파일 주소
 }

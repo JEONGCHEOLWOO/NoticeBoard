@@ -33,8 +33,7 @@ public class JwtService {
     }
     private String extractEmailFromPrincipal(Authentication authentication) {
         Object principal = authentication.getPrincipal();
-        if (principal instanceof DefaultOAuth2User) {
-            DefaultOAuth2User user = (DefaultOAuth2User) principal;
+        if (principal instanceof DefaultOAuth2User user) {
             // 네이버인 경우 response 안에 email이 있고, 다른 제공자는 attributes에 바로 email이 있을 수 있음
             if (user.getAttributes().containsKey("response")) {
                 Object resp = user.getAttributes().get("response");

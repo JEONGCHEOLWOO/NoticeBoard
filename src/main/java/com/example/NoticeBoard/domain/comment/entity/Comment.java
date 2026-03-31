@@ -23,26 +23,27 @@ public class Comment {
     private String content; // 댓글 내용
 
     // 하나의 댓글엔 하나의 이미지만
-    @Column(name = "image_uri")
-    private String imageUri; // 이미지 주소
+    @Column(name = "image_url")
+    private String imageUrl; // 이미지 주소
 
-    @Column(name = "file_uri")
-    private String fileUri; // 파일 주소
-
-    @Column(nullable = false)
-    private boolean gif = false; // GIF 여부
+    @Column(name = "gif_url")
+    private String gifUrl; // GIF 주소
 
     @Column(name = "user_id", nullable = false)
-    private Long user; // 댓글 작성자 id
+    private Long userId; // 댓글 작성자 id
 
     @Column(name = "post_id", nullable = false)
-    private Long post; // 게시글 id
+    private Long postId; // 게시글 id
 
     @Column(name = "parent_id")
     private Long parentId; // 대댓글의 부모 Id (null 이면 최상위 댓글)
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private CommentStatus commentStatus; // 댓글 종류 (일반 댓글, 비밀 댓글, 삭제된 댓글, 블라인드된 댓글 등)
+
     @Column(nullable = false)
-    private Integer likeCount = 0; // 좋아요 수 (캐시)
+    private Long likeCount; // 좋아요 수 (캐시)
 
     @CreationTimestamp
     @Column (nullable = false, updatable = false)
@@ -53,7 +54,22 @@ public class Comment {
 
     private LocalDateTime deletedAt; // 댓글 삭제 요청 날짜
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
-    private CommentStatus commentStatus; // 댓글 종류 (일반 댓글, 비밀 댓글, 삭제된 댓글, 블라인드된 댓글 등)
+    // ------------------비즈니스 메소드-------------------
+    // 댓글 수정
+    public void update(String content, String imageUrl, String gifUrl){
+        this.content = content;
+        this.imageUrl = imageUrl;
+        this.gifUrl = gifUrl;
+    }
+
+    // 댓글 삭제
+    public void delete(){
+        this.commentStatus = CommentStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 삭제된 댓글인지 확인
+    public boolean isDeleted() {
+        return this.commentStatus == CommentStatus.DELETED || this.deletedAt != null;
+    }
 }

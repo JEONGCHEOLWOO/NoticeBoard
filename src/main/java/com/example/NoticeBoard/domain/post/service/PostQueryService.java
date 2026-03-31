@@ -107,7 +107,7 @@ public class PostQueryService {
                 .userId(post.getUserId())
                 .category(post.getCategory())
                 .title(post.getTitle())
-                .image(post.getImageUri() != null)
+                .image(post.getImageUrl() != null)
                 .postStatus(post.getPostStatus())
                 .likeCount(post.getLikeCount())
                 .viewCount(post.getViewCount())
