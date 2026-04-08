@@ -23,21 +23,18 @@ public class AdminLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 내부 PK
 
-    @ManyToOne
-    @JoinColumn(name = "admin_id", nullable = false)
-    private User admin; // 관리자 권한을 가진 user
+    @Column(name = "admin_id", nullable = false)
+    private Long adminId; // 관리자 권한을 가진 user
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ActionType actionType; // 신고 처리 유형 Enum: BLIND_POST, UNBLIND_POST, DELETE_POST, RESTORE_POST, BLIND_COMMENT, UNBLIND_COMMENT, DELETE_COMMENT, RESTORE_COMMENT, BAN_USER, UNBAN_USER
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user; // 신고 당한 유저 Id (게시글 작성자 or 댓글 작성자)
+    @Column(name = "user_id", nullable = false)
+    private Long userId; // 신고 당한 유저 Id (게시글 작성자 or 댓글 작성자)
 
-    @ManyToOne
-    @JoinColumn(name = "post_id")
-    private Post post; // 신고 당한 게시글 Id
+    @Column(name = "post_id")
+    private Long postId; // 신고 당한 게시글 Id
 
     @ManyToOne
     @JoinColumn(name = "comment_id")

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ViewCountProducer {
 
-    public final KafkaTemplate<String, Long> kafkaTemplate;
+    public final KafkaTemplate<String, Object> kafkaTemplate;
 
     public static final String POST_VIEW_TOPIC = "post-view-topic";
 

@@ -2,9 +2,24 @@ package com.example.NoticeBoard.domain.comment.service;
 
 import com.example.NoticeBoard.domain.comment.entity.Comment;
 import com.example.NoticeBoard.domain.comment.entity.CommentLike;
+import com.example.NoticeBoard.domain.comment.repository.CommentLikeRepository;
+import com.example.NoticeBoard.domain.comment.repository.CommentRepository;
 import com.example.NoticeBoard.domain.user.entity.User;
+import com.example.NoticeBoard.domain.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
+@Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class CommentLikeService {
+
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
+    private final UserRepository userRepository;
 
     // 댓글 좋아요
     public void likeComment(Long commentId, Long userId) {
@@ -35,7 +50,8 @@ public class CommentLikeService {
 
         commentLikeRepository.delete(commentLike);
 
-        Comment comment = commentLike.getCommentId();
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
         comment.setLikeCount(comment.getLikeCount() - 1);
     }
 }

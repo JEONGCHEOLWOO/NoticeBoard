@@ -8,6 +8,7 @@ import com.example.NoticeBoard.domain.post.event.ViewCountProducer;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.post.repository.PostSearchRepository;
 import com.example.NoticeBoard.global.enumeration.PostStatus;
+import com.example.NoticeBoard.global.enumeration.SearchType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -81,9 +82,9 @@ public class PostQueryService {
     // 위 어노테이션은 대표적으로 SimpleJpaRepository에 있는 findById, save, delete 메소드에 구현되어 있다.
     // 찾아보니 확실히 성능 개선에 대해서는 이점이 있지만, 추가 쿼리로 인해 DB의 네트워크 요청 건수 또한 최대 6배까지 늘어날 수 있어 비용이 많이 들 수 있기 때문에, 단건 조회(update, insert)요청 메소드에서는 사용하지 않는 것을 추천한다고 한다.
     @Transactional(readOnly = true)
-    public Page<PostSearchResponseDto> searchPosts(String keyword, String type, Pageable pageable){
+    public Page<PostSearchResponseDto> searchPosts(String keyword, SearchType searchType, Pageable pageable){
         
-        Page<PostSearchDocument> documents = postSearchRepository.searchByCondition(keyword, type, pageable);
+        Page<PostSearchDocument> documents = postSearchRepository.searchByCondition(keyword, searchType, pageable);
         
         log.info("게시글 검색 완료: keyword={}, 결과 개수={}, totalElements={}", keyword, documents.getNumberOfElements(), documents.getTotalElements());
         
@@ -103,7 +104,6 @@ public class PostQueryService {
 
         return posts.map(post -> PostSearchResponseDto.builder()
                 .id(post.getId())
-                .postId(post.getId())
                 .userId(post.getUserId())
                 .category(post.getCategory())
                 .title(post.getTitle())

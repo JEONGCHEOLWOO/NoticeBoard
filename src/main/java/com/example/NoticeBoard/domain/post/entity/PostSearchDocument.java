@@ -2,6 +2,7 @@ package com.example.NoticeBoard.domain.post.entity;
 
 import com.example.NoticeBoard.global.enumeration.Category;
 import com.example.NoticeBoard.global.enumeration.PostStatus;
+import com.example.NoticeBoard.global.enumeration.SearchType;
 import jakarta.persistence.Id;
 import lombok.*;
 import org.springframework.data.elasticsearch.annotations.DateFormat;
@@ -19,14 +20,19 @@ import java.time.LocalDateTime;
 public class PostSearchDocument {
 
     @Id
-    @Field(type = FieldType.Long)
-    private Long postId; // 게시글 Id
+    private Long id;
+
+//    @Field(type = FieldType.Long)
+//    private Long postId; // 게시글 Id
 
     @Field(type = FieldType.Long)
     private Long userId; // 작성자 Id
 
     @Field(type = FieldType.Keyword)
-    private Category category; 
+    private Category category;
+
+    @Field(type = FieldType.Keyword)
+    private SearchType searchType;
 
     @Field(type = FieldType.Text, analyzer = "nori")
     private String title;
@@ -57,13 +63,13 @@ public class PostSearchDocument {
 
     public static PostSearchDocument from(Post post){
         return PostSearchDocument.builder()
-                .postId(post.getId())
+                .id(post.getId())
                 .userId(post.getUserId())
                 .category(post.getCategory())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .nickname(post.getNickname())
-                .image(post.getImageUri() != null)
+                .image(post.getImageUrl() != null)
                 .postStatus(post.getPostStatus())
                 .viewCount(post.getViewCount())
                 .likeCount(post.getLikeCount())

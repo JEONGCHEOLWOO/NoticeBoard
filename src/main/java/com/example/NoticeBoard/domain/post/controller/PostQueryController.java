@@ -3,6 +3,7 @@ package com.example.NoticeBoard.domain.post.controller;
 import com.example.NoticeBoard.domain.post.dto.PostResponseDto;
 import com.example.NoticeBoard.domain.post.dto.PostSearchResponseDto;
 import com.example.NoticeBoard.domain.post.service.PostQueryService;
+import com.example.NoticeBoard.global.enumeration.SearchType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,10 +43,10 @@ public class PostQueryController {
     @GetMapping("/search")
     public ResponseEntity<Page<PostSearchResponseDto>> searchPosts(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "titleAndContent") String type,
+            @RequestParam(defaultValue = "titleAndContent") SearchType searchType,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable){
-        log.info("게시글 검색 요청: keyword={}, type={}", keyword, type);
-        return ResponseEntity.ok(postQueryService.searchPosts(keyword, type, pageable));
+        log.info("게시글 검색 요청: keyword={}, type={}", keyword, searchType);
+        return ResponseEntity.ok(postQueryService.searchPosts(keyword, searchType, pageable));
     }
 
 }

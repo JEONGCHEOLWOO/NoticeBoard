@@ -28,8 +28,8 @@ public class AdminController {
     public ResponseEntity<Void> blindPost(
             @PathVariable Long postId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.blindPostByAdmin(postId, admin, requestDto.getDetail(), requestDto.getReportReason());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.blindPostByAdmin(postId, adminId, requestDto.getDetail(), requestDto.getReportReason());
         return ResponseEntity.noContent().build();
     }
 
@@ -38,8 +38,8 @@ public class AdminController {
     public ResponseEntity<Void> deletePost(
             @PathVariable Long postId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.deletePostByAdmin(postId, admin, requestDto.getDetail(), requestDto.getReportReason());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.deletePostByAdmin(postId, adminId, requestDto.getDetail(), requestDto.getReportReason());
         return ResponseEntity.noContent().build();
     }
 
@@ -48,8 +48,8 @@ public class AdminController {
     public ResponseEntity<Void> hardDeletePost(
             @PathVariable Long postId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.hardDeletePostByAdmin(postId, admin, requestDto.getDetail());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.hardDeletePostByAdmin(postId, adminId, requestDto.getDetail());
         return ResponseEntity.noContent().build();
     }
 
@@ -58,8 +58,8 @@ public class AdminController {
     public ResponseEntity<Void> blindComment(
             @PathVariable Long commentId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.blindCommentByAdmin(commentId, admin, requestDto.getDetail(), requestDto.getReportReason());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.blindCommentByAdmin(commentId, adminId, requestDto.getDetail(), requestDto.getReportReason());
         return ResponseEntity.noContent().build();
     }
 
@@ -68,8 +68,8 @@ public class AdminController {
     public ResponseEntity<Void> deleteComment(
             @PathVariable Long commentId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.deleteCommentByAdmin(commentId, admin, requestDto.getDetail(), requestDto.getReportReason());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.deleteCommentByAdmin(commentId, adminId, requestDto.getDetail(), requestDto.getReportReason());
         return ResponseEntity.noContent().build();
     }
 
@@ -78,8 +78,8 @@ public class AdminController {
     public ResponseEntity<Void> hardDeleteComment(
             @PathVariable Long commentId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.hardDeleteCommentByAdmin(commentId, admin, requestDto.getDetail());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.hardDeleteCommentByAdmin(commentId, adminId, requestDto.getDetail());
         return ResponseEntity.noContent().build();
     }
 
@@ -88,8 +88,8 @@ public class AdminController {
     public ResponseEntity<Void> banUser(
             @PathVariable Long userId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.banUser(userId, admin, requestDto.getDetail());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.banUser(userId, adminId, requestDto.getDetail());
         return ResponseEntity.noContent().build();
     }
 
@@ -98,8 +98,8 @@ public class AdminController {
     public ResponseEntity<Void> unbanUser(
             @PathVariable Long userId,
             @RequestBody AdminRequestDto requestDto,
-            @AuthenticationPrincipal User admin) {
-        adminService.unbanUser(userId, admin, requestDto.getDetail());
+            @AuthenticationPrincipal Long adminId) {
+        adminService.unbanUser(userId, adminId, requestDto.getDetail());
         return ResponseEntity.noContent().build();
     }
 
@@ -108,7 +108,7 @@ public class AdminController {
     public ResponseEntity<AdminStatisticsDto> getStatistics(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate endDate,
-            @AuthenticationPrincipal User admin){
+            @AuthenticationPrincipal Long adminId){
         if (startDate == null){
             startDate = LocalDate.now().minusDays(30);
         }
@@ -116,24 +116,24 @@ public class AdminController {
             endDate = LocalDate.now();
         }
 
-        AdminStatisticsDto statisticsDto = adminService.getAdminStatistics(admin, startDate, endDate);
+        AdminStatisticsDto statisticsDto = adminService.getAdminStatistics(adminId, startDate, endDate);
         return ResponseEntity.ok(statisticsDto);
     }
 
     // 대시보드 (7일)
     @GetMapping("/dashboard")
-    public ResponseEntity<AdminStatisticsDto> getDashbord(@AuthenticationPrincipal User admin){
+    public ResponseEntity<AdminStatisticsDto> getDashbord(@AuthenticationPrincipal Long adminId){
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(7);
 
-        AdminStatisticsDto statisticsDto = adminService.getAdminStatistics(admin, startDate, endDate);
+        AdminStatisticsDto statisticsDto = adminService.getAdminStatistics(adminId, startDate, endDate);
         return ResponseEntity.ok(statisticsDto);
     }
 
     // 최근 관리자 활동 로그 조회 (최근 50개)
     @GetMapping("/logs/recent")
-    public ResponseEntity<List<AdminLog>> getRecentLogs(@AuthenticationPrincipal User admin){
-        List<AdminLog> logs = adminService.getRecentAdminLogs(admin);
+    public ResponseEntity<List<AdminLog>> getRecentLogs(@AuthenticationPrincipal Long adminId){
+        List<AdminLog> logs = adminService.getRecentAdminLogs(adminId);
         return ResponseEntity.ok(logs);
     }
 
@@ -142,8 +142,8 @@ public class AdminController {
     public ResponseEntity<List<AdminLog>> getLogsByDateRange(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate endDate,
-            @AuthenticationPrincipal User admin){
-        List<AdminLog> logs = adminService.getAdminLogsByDateRange(admin, startDate, endDate);
+            @AuthenticationPrincipal Long adminId){
+        List<AdminLog> logs = adminService.getAdminLogsByDateRange(adminId, startDate, endDate);
         return ResponseEntity.ok(logs);
     }
 

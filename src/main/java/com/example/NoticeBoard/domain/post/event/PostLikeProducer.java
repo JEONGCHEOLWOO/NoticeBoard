@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PostLikeProducer {
 
-    public final KafkaTemplate<String, String> kafkaTemplate;
+    public final KafkaTemplate<String, Object> kafkaTemplate;
 
     public static final String POST_LIKE_TOPIC = "post-like-topic";
 

@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostEventProducer {
 
-    private final KafkaTemplate<String, PostEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     public static final String POST_EVENT_TOPIC = "post-event-topic";
 
     public void sendPostCreatedEvent(Long postId){

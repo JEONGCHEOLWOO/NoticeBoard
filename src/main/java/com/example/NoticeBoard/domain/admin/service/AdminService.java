@@ -8,7 +8,6 @@ import com.example.NoticeBoard.domain.admin.dto.AdminStatisticsDto;
 import com.example.NoticeBoard.domain.admin.dto.MultipleReportUserDto;
 import com.example.NoticeBoard.domain.admin.dto.ReportStatistics;
 import com.example.NoticeBoard.domain.admin.dto.UserMetrics;
-import com.example.NoticeBoard.enumeration.*;
 import com.example.NoticeBoard.global.enumeration.*;
 import com.example.NoticeBoard.domain.post.entity.Post;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
@@ -42,26 +41,32 @@ public class AdminService {
     private final AdminRepository adminRepository;
 
     // ADMIN 검증 - 프론트에서도 ADMIN을 검증하는데 여기에서도 ADMIN인지 검증하는 이유: API를 직접적으로 호출하거나 JS조작을 통해서 API를 호출하는 경우, POSTMAN이나 CURL, 모바일 앱에서 호출하는 경우 보안에 취약해질 수 있음.
-    private void validateAdmin(User admin){
+    private void validateAdmin(Long adminId){
+
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(()-> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
         if(admin == null || admin.getRole() != Role.ADMIN){
             throw new AccessDeniedException("관리자 권한이 없습니다.");
         }
     }
 
     // 게시글 블라인드 처리
-    public void blindPostByAdmin(Long postId, User admin, String detail, ReportReason reportReason) {
-        validateAdmin(admin);
+    public void blindPostByAdmin(Long postId, Long adminId, String detail, ReportReason reportReason) {
+        validateAdmin(adminId);
         PostReport postReport = postReportRepository.findById(postId)
                 .orElseThrow(()-> new IllegalArgumentException("신고된 게시글을 찾을 수 없습니다."));
 
-        Post post = postReport.getPost();
+        Post post = postRepository.findById(postId)
+                .orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
         post.setPostStatus(PostStatus.BLIND);
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.BLIND_POST)
-                .user(postReport.getUser())
-                .post(post)
+                .userId(postReport.getUserId())
+                .postId(postReport.getPostId())
                 .reportType(ReportType.POST)
                 .reportReason(reportReason)
                 .detail(detail)
@@ -73,19 +78,22 @@ public class AdminService {
     }
 
     // 게시글 삭제 처리 (Soft Delete)
-    public void deletePostByAdmin(Long postId, User admin, String detail, ReportReason reportReason){
-        validateAdmin(admin);
+    public void deletePostByAdmin(Long postId, Long adminId, String detail, ReportReason reportReason){
+
+        validateAdmin(adminId);
         PostReport postReport = postReportRepository.findById(postId)
                 .orElseThrow(()-> new IllegalArgumentException("신고된 게시글을 찾을 수 없습니다."));
 
-        Post post = postReport.getPost();
+        Post post = postRepository.findById(postId)
+                .orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
         post.setPostStatus(PostStatus.DELETED);
         
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.DELETE_POST)
-                .user(post.getUser())
-                .post(post)
+                .userId(postReport.getUserId())
+                .postId(postReport.getPostId())
                 .reportType(ReportType.POST)
                 .reportReason(reportReason)
                 .detail(detail)
@@ -98,16 +106,16 @@ public class AdminService {
     }
 
     // 게시글 영구 삭제 (Hard Delete)
-    public void hardDeletePostByAdmin(Long postId, User admin, String detail) {
-        validateAdmin(admin);
+    public void hardDeletePostByAdmin(Long postId, Long adminId, String detail) {
+        validateAdmin(adminId);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("신고된 게시글을 찾을 수 없습니다."));
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.DELETE_POST) // 하드 삭제도 DELETE로 기록
-                .user(post.getUser())
-                .post(null) // 삭제 후에는 참조 불가
+                .userId(post.getUserId())
+                .postId(null) // 삭제 후에는 참조 불가
                 .reportType(ReportType.POST)
                 .detail("HARD DELETE: " + detail)
                 .build();
@@ -118,8 +126,8 @@ public class AdminService {
     }
 
     // 댓글 블라인드 처리
-    public void blindCommentByAdmin(Long commentId, User admin, String detail, ReportReason reportReason){
-        validateAdmin(admin);
+    public void blindCommentByAdmin(Long commentId, Long adminId, String detail, ReportReason reportReason){
+        validateAdmin(adminId);
         CommentReport commentReport = commentReportRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("신고된 댓글을 찾을 수 없습니다."));
 
@@ -127,9 +135,9 @@ public class AdminService {
         comment.setCommentStatus(CommentStatus.BLIND);
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.BLIND_COMMENT)
-                .user(comment.getUser())
+                .userId(comment.getUserId())
                 .comment(comment)
                 .reportType(ReportType.COMMENT)
                 .reportReason(reportReason)
@@ -143,8 +151,8 @@ public class AdminService {
     }
     
     // 댓글 삭제 처리 (Soft Delete)
-    public void deleteCommentByAdmin(Long commentId, User admin, String detail, ReportReason reportReason) {
-        validateAdmin(admin);
+    public void deleteCommentByAdmin(Long commentId, Long adminId, String detail, ReportReason reportReason) {
+        validateAdmin(adminId);
         CommentReport commentReport = commentReportRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("신고된 댓글을 찾을 수 없습니다."));
 
@@ -152,9 +160,9 @@ public class AdminService {
         comment.setCommentStatus(CommentStatus.DELETED);
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.DELETE_COMMENT)
-                .user(comment.getUser())
+                .userId(comment.getUserId())
                 .comment(comment)
                 .reportType(ReportType.COMMENT)
                 .reportReason(reportReason)
@@ -167,15 +175,15 @@ public class AdminService {
     }
 
     // 댓글 영구 삭제 (Hard Delete)
-    public void hardDeleteCommentByAdmin(Long commentId, User admin, String detail) {
-        validateAdmin(admin);
+    public void hardDeleteCommentByAdmin(Long commentId, Long adminId, String detail) {
+        validateAdmin(adminId);
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("신고된 댓글을 찾을 수 없습니다."));
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.DELETE_COMMENT) // 하드 삭제도 DELETE로 기록
-                .user(comment.getUser())
+                .userId(comment.getUserId())
                 .comment(null) // 삭제 후에는 참조 불가
                 .reportType(ReportType.COMMENT)
                 .detail("HARD DELETE: " + detail)
@@ -187,17 +195,17 @@ public class AdminService {
     }
 
     // 유저 차단 처리 - 유저를 신고하는 이유? -> 게시글이나 댓글에 신고를 많이 당한 경우 - 유저의 신고당한 횟수를 확인해서 처리
-    public void banUser(Long userId, User admin, String detail){
-        validateAdmin(admin);
+    public void banUser(Long userId, Long adminId, String detail){
+        validateAdmin(adminId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         user.setUserStatus(UserStatus.BANNED);
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.BAN_USER)
-                .user(user)
+                .userId(userId)
                 .detail(detail)
                 .build();
 
@@ -205,17 +213,17 @@ public class AdminService {
     }
 
     // 유저 차단 해제
-    public void unbanUser(Long userId, User admin, String detail){
-        validateAdmin(admin);
+    public void unbanUser(Long userId, Long adminId, String detail){
+        validateAdmin(adminId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         user.setUserStatus(UserStatus.NORMAL);
 
         AdminLog log = AdminLog.builder()
-                .admin(admin)
+                .adminId(adminId)
                 .actionType(ActionType.UNBAN_USER)
-                .user(user)
+                .userId(userId)
                 .detail(detail)
                 .build();
 
@@ -224,8 +232,8 @@ public class AdminService {
 
     // 관리자 통계
     @Transactional
-    public AdminStatisticsDto getAdminStatistics(User admin, LocalDate startDate,LocalDate endDate) {
-        validateAdmin(admin);
+    public AdminStatisticsDto getAdminStatistics(Long adminId, LocalDate startDate,LocalDate endDate) {
+        validateAdmin(adminId);
 
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23,59,59);
@@ -323,7 +331,7 @@ public class AdminService {
     ){
         // 게시글 신고자 Id
         Map<Long, List<PostReport>> postReportsByUser = postReports.stream()
-                .collect(Collectors.groupingBy(r -> r.getUser().getId()));
+                .collect(Collectors.groupingBy(r -> r.getUserId()));
 
         // 댓글 신고자 Id
         Map<Long, List<CommentReport>> commentReportsByUser = commentReports.stream()
@@ -363,17 +371,17 @@ public class AdminService {
                 ).max(LocalDateTime::compareTo).orElse(null);
 
                 // 유저 정보
-                User reporter = !userPostReports.isEmpty()
-                        ? userPostReports.get(0).getUser()
-                        : userCommentReports.get(0).getUser();
+//                User reporter = !userPostReports.isEmpty()
+//                        ? userPostReports.get(0).getUserId()
+//                        : userCommentReports.get(0).getUser();
 
-                result.add(MultipleReportUserDto.builder()
-                        .reporterId(userId)
-                        .reporterName(reporter.getEmail())
-                        .reportCount(totalCount)
-                        .lastReportTime(lastReportTime)
-                        .reportReasonCount(reasonCount)
-                        .build());
+//                result.add(MultipleReportUserDto.builder()
+//                        .reporterId(userId)
+//                        .reporterName(reporter.getEmail())
+//                        .reportCount(totalCount)
+//                        .lastReportTime(lastReportTime)
+//                        .reportReasonCount(reasonCount)
+//                        .build());
             }
         }
 
@@ -398,15 +406,15 @@ public class AdminService {
 
     // 최근 관리자 로그    
     @Transactional
-    public List<AdminLog> getRecentAdminLogs(User admin) {
-        validateAdmin(admin);
+    public List<AdminLog> getRecentAdminLogs(Long adminId) {
+        validateAdmin(adminId);
         return adminRepository.findTop50ByOrderByCreatedAtDesc();
     }
 
     // 특정 기간 관리자 로그 조회
     @Transactional
-    public List<AdminLog> getAdminLogsByDateRange(User admin, LocalDate startDate, LocalDate endDate) {
-        validateAdmin(admin);
+    public List<AdminLog> getAdminLogsByDateRange(Long adminId, LocalDate startDate, LocalDate endDate) {
+        validateAdmin(adminId);
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
         return adminRepository.findByCreatedAtBetweenOrderByCreatedAtDesc(startDateTime, endDateTime);
