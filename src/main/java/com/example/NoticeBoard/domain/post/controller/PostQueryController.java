@@ -30,7 +30,7 @@ public class PostQueryController {
         return ResponseEntity.ok(postQueryService.getPostDetail(postId));
     }
 
-    // 게시글 조회(전체 최신순)
+    // 게시글 조회(전체 최신순) - 항상 한페이지에 최대 20개 미만의 게시글이 나와야함.
     @GetMapping("/find/all")
     public ResponseEntity<Page<PostSearchResponseDto>> findAllPosts(
             @RequestParam(defaultValue = "0") int page,

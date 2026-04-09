@@ -37,27 +37,26 @@ public class CommentCommandService {
             "media.tenor.com"
     );
 
-    private static final String SIGNATURE_SECRET = "my-secret-key";
     public static final String COMMENT_DETAIL = "comment:detail:";
-
-
 
     // 댓글 생성
     public CommentResponseDto createComment(Long postId, Long userId, CommentRequestDto commentRequestDto) {
         
-        postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
-
-        userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
-
-        // 이미지/ GIF 정책 확인 - 하나의 댓글에는 하나의 이미지나 GIF 만 가능하고, 이미지와 GIF는 동시에 업로드 할 수 없음.
-        validateMedia(commentRequestDto);
-        validateGifUrl(commentRequestDto.getGifUrl());
-
-        if (commentRequestDto.getGifUrl() != null) {
-            commentRequestDto.setGifUrl(generateSignedUrl(commentRequestDto.getGifUrl()));
+        if (!postRepository.existsById(postId)) {
+            throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다.");
         }
+
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
+        }
+
+        // 이미지/ GIF 정책 확인
+        // 하나의 댓글에는 하나의 이미지나 GIF 만 가능하고, 이미지와 GIF는 동시에 업로드 할 수 없음.
+        validateMedia(commentRequestDto);
+
+        // GIF 주소 확인
+        // 허용된 주소에서 가져온 GIF만 사용 가능.
+        validateGifUrl(commentRequestDto.getGifUrl());
 
         // 연속 댓글 제한 (60초) - 도배 위험
         List<Comment> recent = commentRepository.findTop2ByPostIdAndUserIdOrderByCreatedAtDesc(postId, userId);
@@ -69,24 +68,11 @@ public class CommentCommandService {
                 throw new IllegalStateException("댓글은 60초에 1개만 작성할 수 있습니다.");
             }
         }
-
-        // 댓글 1개당 이미지 1개
-        if (commentRequestDto.getImageUrl() != null && commentRequestDto.getImageUrl().contains(",")) {
-            throw new IllegalArgumentException("댓글에는 이미지를 1개만 첨부할 수 있습니다.");
-        }
-
-        // 부모 댓글 확인 - 부모 댓글이 있으면 대댓글, 없으면 게시글 댓글
-        Long parentId = null;
-        if (commentRequestDto.getParentId() != null) {
-            Comment parent = commentRepository.findById(commentRequestDto.getParentId())
-                    .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 없습니다."));
-            parentId = parent.getId();
-        }
         
         Comment comment = Comment.builder()
                 .postId(postId)
                 .userId(userId)
-                .parentId(parentId)
+                .parentId(commentRequestDto.getParentId())
                 .content(commentRequestDto.getContent())
                 .imageUrl(commentRequestDto.getImageUrl())
                 .gifUrl(commentRequestDto.getGifUrl())
@@ -103,7 +89,7 @@ public class CommentCommandService {
     }
 
     // 댓글 수정 - IllegalArgumentException 와 IllegalStateException 차이
-    public CommentResponseDto updateComment(Long postId, Long commentId, Long userId, CommentRequestDto commentRequestDto){
+    public CommentResponseDto updateComment(Long commentId, Long userId, CommentRequestDto commentRequestDto){
         
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
@@ -113,19 +99,20 @@ public class CommentCommandService {
             throw new IllegalArgumentException("본인이 작성한 댓글만 수정할 수 있습니다.");
         }
 
-        // 부모 댓글이 삭제된 댓글인지 확인
         // 삭제된 댓글인지 확인
         if (comment.isDeleted()){
             throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없습니다.");
         }
 
+        // 이미지/ GIF 정책 확인
+        // 하나의 댓글에는 하나의 이미지나 GIF 만 가능하고, 이미지와 GIF는 동시에 업로드 할 수 없음.
         validateMedia(commentRequestDto);
+
+        // GIF 주소 확인
+        // 허용된 주소에서 가져온 GIF만 사용 가능.
         validateGifUrl(commentRequestDto.getGifUrl());
 
-        if (commentRequestDto.getGifUrl() != null) {
-            commentRequestDto.setGifUrl(generateSignedUrl(commentRequestDto.getGifUrl()));
-        }
-
+        // ------- 여기서 부터 수정 필요.
         // 비즈니스 메소드(comment 엔터티)
         comment.update(commentRequestDto.getContent(), commentRequestDto.getImageUrl(), commentRequestDto.getGifUrl());
 
@@ -134,20 +121,20 @@ public class CommentCommandService {
         
         // kafka 이벤트 생성
         commentEventProducer.sendCommentUpdateEvent(commentId);
-        log.info("댓글 수정 완료: commentId={}, parentId={}, postId={}, userId={}", commentId, comment.getParentId(), postId, userId);
+        log.info("댓글 수정 완료: commentId={}, parentId={}, postId={}, userId={}", commentId, comment.getParentId(), comment.getPostId(), userId);
 
         return CommentResponseDto.fromEntity(comment);
 
     }
 
     // 댓글 삭제
-    public void deleteComment(Long postId, Long commentId, Long userId) {
-
-        postRepository.findById(postId)
-                .orElseThrow(()-> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+    public void deleteComment(Long commentId, Long userId) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
+
+        postRepository.findById(comment.getPostId())
+                .orElseThrow(()-> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
         // 작성자 본인 확인
         if (!comment.getUserId().equals(userId)) {
@@ -162,7 +149,7 @@ public class CommentCommandService {
 
         // kafka 이벤트 생성
         commentEventProducer.sendCommentDeleteEvent(commentId);
-        log.info("댓글 삭제 완료: commentId={}, parentId={}, postId={}, userId={}", commentId, comment.getParentId(), postId, userId);
+        log.info("댓글 삭제 완료: commentId={}, parentId={}, postId={}, userId={}", commentId, comment.getParentId(), comment.getPostId(), userId);
     }
 
     // Redis 캐시 삭제 - 데이터가 수정되거나 삭제되면 캐시를 제거해서 데이터 불일치를 방지시킴.
@@ -200,18 +187,6 @@ public class CommentCommandService {
         if (!valid){
             throw new IllegalArgumentException("허용되지 않은 GIF URL 입니다.");
         }
-    }
-
-    // Signed URL 생성 - 복사 방지
-    private String generateSignedUrl(String gifUrl) {
-
-        long expires = System.currentTimeMillis() + 60000;
-
-        String data = gifUrl + expires + SIGNATURE_SECRET;
-
-        String signature = Integer.toHexString(data.hashCode());
-
-        return "/api/gif?url=" + gifUrl + "&expires=" + expires + "&sig" + signature;
     }
 
 }

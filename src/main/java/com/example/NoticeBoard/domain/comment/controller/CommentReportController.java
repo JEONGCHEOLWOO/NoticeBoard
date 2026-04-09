@@ -10,7 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/comments/report")
+@RequestMapping("/comments/reports")
 @RequiredArgsConstructor
 @Slf4j
 public class CommentReportController {
@@ -18,11 +18,12 @@ public class CommentReportController {
     private final CommentReportService commentReportService;
 
     // 댓글 신고
-    @PostMapping("/report/{commentId}")
+    @PostMapping("/{commentId}")
     public ResponseEntity<Void> reportComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CommentReportRequestDto commentReportRequestDto) {
+        log.info("댓글 신고 요청: commentId={}, userId={}", commentId, userDetails.getId());
         commentReportService.reportComment(commentId, userDetails.getId(), commentReportRequestDto);
         return ResponseEntity.ok().build();
     }

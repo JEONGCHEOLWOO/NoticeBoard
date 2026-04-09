@@ -19,11 +19,9 @@ public class CommentResponseDto {
 
     private String gifUrl;      // gif 주소
 
-    private Long userId;        // FK -> 댓글 작성자 id
+    private Long userId;        // 댓글 작성자 id
 
-//    private String nickname;    // 대댓글 작성자 부모의 닉네임
-
-    private Long postId;        // FK -> 게시글 id
+    private Long postId;        // 게시글 id
 
     private Long parentId;      // 대댓글 부모의 id
 
@@ -35,33 +33,19 @@ public class CommentResponseDto {
 
     private LocalDateTime updatedAt; // 댓글 수정 시간
 
-//    private List<CommentResponseDto> replies; // 대댓글
-
     public static CommentResponseDto fromEntity(Comment comment) {
         return CommentResponseDto.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
-                .imageUrl(comment.getImageUrl())
-                .gifUrl(comment.getGifUrl())
+                .imageUrl(comment.getImageUrl()) // null 가능
+                .gifUrl(comment.getGifUrl()) // null 가능
                 .userId(comment.getUserId())
                 .postId(comment.getPostId())
-                .parentId(
-                        comment.getParentId() != null
-                                ? comment.getParentId()
-                                : null
-                )
+                .parentId(comment.getParentId()) // null 가능
                 .likeCount(comment.getLikeCount())
                 .commentStatus(comment.getCommentStatus())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-//                .replies(
-//                        comment.getReplies() == null
-//                                ? List.of()
-//                                : comment.getReplies()
-//                                .stream()
-//                                .map(CommentResponseDto::fromEntity)
-//                                .collect(Collectors.toList())
-//                )
                 .build();
     }
 }

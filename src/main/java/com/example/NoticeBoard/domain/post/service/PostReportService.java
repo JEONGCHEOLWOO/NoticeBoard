@@ -5,7 +5,6 @@ import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.report.dto.PostReportRequestDto;
 import com.example.NoticeBoard.domain.report.entity.PostReport;
 import com.example.NoticeBoard.domain.report.repository.PostReportRepository;
-import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
 import com.example.NoticeBoard.global.enumeration.PostStatus;
 import com.example.NoticeBoard.global.enumeration.ReportStatus;

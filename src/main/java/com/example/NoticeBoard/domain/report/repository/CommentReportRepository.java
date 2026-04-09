@@ -9,13 +9,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface CommentReportRepository  extends JpaRepository<CommentReport, Long> {
+public interface CommentReportRepository extends JpaRepository<CommentReport, Long> {
 
     // 회원이 해당 댓글을 신고한 적 있는지
     boolean existsByCommentIdAndUserId(Long postId, Long userId);
 
     // 특정 기간의 신고 조회
     List<CommentReport> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    // 댓글이 신고된 수 카운트
+    Long countByCommentId(Long commentId);
 
     // 특정 기간 신고 수 카운트
     Long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);

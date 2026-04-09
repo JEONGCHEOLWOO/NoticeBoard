@@ -6,10 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/comments/likes")
@@ -20,19 +17,21 @@ public class CommentLikeController {
     private final CommentLikeService commentLikeService;
 
     // 댓글 좋아요
-    @PostMapping("/like/{commentId}")
+    @PostMapping("/{commentId}")
     public ResponseEntity<Void> likeComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("댓글 좋아요 요청: commentId={}, userId={}", commentId, userDetails.getId());
         commentLikeService.likeComment(commentId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
 
     // 댓글 좋아요 취소
-    @PostMapping("/unlike/{commentId}")
+    @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> unlikeComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("댓글 좋아요 요청 취소: commentId={}, userId={}", commentId, userDetails.getId());
         commentLikeService.unlikeComment(commentId, userDetails.getId());
         return ResponseEntity.ok().build();
     }

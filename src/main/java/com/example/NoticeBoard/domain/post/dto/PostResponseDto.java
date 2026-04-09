@@ -14,17 +14,23 @@ public class PostResponseDto {
 
     private Long id; // 내부 PK (식별자)
 
-    private Category category; // 카테고리
+    private Category category; // 카테고리 (공지사항, QNA, 자유)
  
     private String title; // 게시글 제목
 
     private String content; // 게시글 내용
 
-    private Long viewCount; // 조회수
+    private String imageUrl; // 이미지 주소
 
-    private Long likeCount; // 게시글 좋아요 수
+    private String fileUrl; // 파일 주소
 
     private PostStatus postStatus; // 게시글 종류(일반 게시글, 비밀 게시글, 삭제된 게시글, 블라인드된 게시글 등)
+
+    private Long viewCount; // 조회수
+
+    private Long commentCount; // 댓글 수
+
+    private Long likeCount; // 게시글 좋아요 수
 
     private LocalDateTime createdAt; // 게시글 작성 시간
 
@@ -36,9 +42,12 @@ public class PostResponseDto {
                 .category(post.getCategory())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .viewCount(post.getViewCount())
-                .likeCount(post.getLikeCount())
+                .imageUrl(post.getImageUrl())
+                .fileUrl(post.getFileUrl())
                 .postStatus(post.getPostStatus())
+                .viewCount(post.getViewCount())
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();

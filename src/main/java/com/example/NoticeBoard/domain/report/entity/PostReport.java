@@ -2,8 +2,6 @@ package com.example.NoticeBoard.domain.report.entity;
 
 import com.example.NoticeBoard.global.enumeration.ReportReason;
 import com.example.NoticeBoard.global.enumeration.ReportStatus;
-import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

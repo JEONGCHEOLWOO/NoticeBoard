@@ -5,7 +5,6 @@ import com.example.NoticeBoard.domain.comment.repository.CommentRepository;
 import com.example.NoticeBoard.domain.report.dto.CommentReportRequestDto;
 import com.example.NoticeBoard.domain.report.entity.CommentReport;
 import com.example.NoticeBoard.domain.report.repository.CommentReportRepository;
-import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
 import com.example.NoticeBoard.global.enumeration.CommentStatus;
 import com.example.NoticeBoard.global.enumeration.ReportStatus;
@@ -20,9 +19,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class CommentReportService {
 
+    private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final CommentReportRepository commentReportRepository;
-    private final UserRepository userRepository;
 
     // 댓글 신고
     public void reportComment(Long commentId, Long userId, CommentReportRequestDto requestDto) {
@@ -30,8 +29,9 @@ public class CommentReportService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+        if(!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
+        }
 
         if (commentReportRepository.existsByCommentIdAndUserId(commentId, userId)) {
             throw new IllegalStateException("이미 신고한 댓글입니다.");
@@ -42,19 +42,21 @@ public class CommentReportService {
         }
 
         CommentReport report = CommentReport.builder()
-                .comment(comment)
-                .user(user)
-                .reportReason(requestDto.getReason())
+                .commentId(commentId)
+                .userId(userId)
                 .content(requestDto.getText())
+                .reportReason(requestDto.getReason())
                 .reportStatus(ReportStatus.PROCESSING)
                 .build();
 
         commentReportRepository.save(report);
 
-//        // 신고 5회 이상 → 자동 블라인드
-//        if (comment.getReports().size() >= 5) {
-//            comment.setCommentStatus(CommentStatus.BLIND);
-//        }
+        long reportCount = commentReportRepository.countByCommentId(commentId);
+
+        // 신고 5회 이상 → 자동 블라인드
+        if (reportCount >= 5 && comment.getCommentStatus() != CommentStatus.BLIND) {
+            comment.setCommentStatus(CommentStatus.BLIND);
+        }
     }
 
 }
