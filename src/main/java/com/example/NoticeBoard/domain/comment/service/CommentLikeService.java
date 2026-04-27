@@ -4,7 +4,6 @@ import com.example.NoticeBoard.domain.comment.entity.Comment;
 import com.example.NoticeBoard.domain.comment.entity.CommentLike;
 import com.example.NoticeBoard.domain.comment.repository.CommentLikeRepository;
 import com.example.NoticeBoard.domain.comment.repository.CommentRepository;
-import com.example.NoticeBoard.domain.user.entity.User;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +26,9 @@ public class CommentLikeService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다."));
+        if(!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
+        }
 
         CommentLike commentLike = CommentLike.builder()
                 .commentId(commentId)

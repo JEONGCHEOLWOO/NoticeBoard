@@ -50,7 +50,15 @@ public class PostQueryService {
         String cacheKey = "post:detail:" + postId;
         // GET post:detail:postId -> GET post:detail:12 -> 게시글 12의 값을 불러옴
         // 여기서 Redis의 String 명령어 Get 실행.
+        // 캐시 조회
         PostResponseDto cachedPost = (PostResponseDto) redisTemplate.opsForValue().get(cacheKey);
+
+        if(cachedPost != null){
+            log.info("Redis 캐시 히트: postId={}", postId);
+            return cachedPost;
+        }
+
+        log.info("Redis 캐시 미스: DB 조회 진행 postId={}", postId);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
@@ -60,16 +68,9 @@ public class PostQueryService {
             throw new IllegalArgumentException("삭제된 게시글입니다.");
         }
 
-        if(cachedPost != null){
-            log.info("Redis 캐시 히트: postId={}", postId);
-            return cachedPost;
-        }
-
-        log.info("Redis 캐시 미스: DB 조회 진행 postId={}", postId);
-
         PostResponseDto response = PostResponseDto.fromEntity(post);
 
-        // Redis에 캐시 저장
+        // Redis에 캐시 저장 (TTL - 10분)
         redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
 
         log.info("게시글 상세 조회 완료: postId={}", postId);

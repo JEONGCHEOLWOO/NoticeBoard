@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter @Setter
@@ -56,13 +57,33 @@ public class Comment {
 
     // ------------------비즈니스 메소드-------------------
     // 댓글 수정
-    public void update(String content, String imageUrl, String gifUrl){
-        this.content = content;
-        this.imageUrl = imageUrl;
-        this.gifUrl = gifUrl;
+    public boolean isChanged(String content, String imageUrl, String gifUrl, CommentStatus commentStatus){
+        boolean changed = false;
+
+        if(!Objects.equals(this.content, content)){
+            this.content = content;
+            changed = true;
+        }
+
+        if(!Objects.equals(this.imageUrl, imageUrl)){
+            this.imageUrl = imageUrl;
+            changed = true;
+        }
+
+        if(!Objects.equals(this.gifUrl, gifUrl)){
+            this.gifUrl = gifUrl;
+            changed = true;
+        }
+
+        if(!Objects.equals(this.commentStatus, commentStatus)){
+            this.commentStatus = commentStatus;
+            changed = true;
+        }
+
+        return changed;
     }
 
-    // 댓글 삭제
+    // 댓글 삭제 (Soft Delete)
     public void delete(){
         this.commentStatus = CommentStatus.DELETED;
         this.deletedAt = LocalDateTime.now();

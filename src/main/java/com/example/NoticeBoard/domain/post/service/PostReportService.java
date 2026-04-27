@@ -32,6 +32,7 @@ public class PostReportService {
         if(!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
         }
+
         if (postReportRepository.existsByPostIdAndUserId(postId, userId)) {
             throw new IllegalStateException("이미 신고한 게시글입니다.");
         }

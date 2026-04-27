@@ -88,12 +88,13 @@ public class PostCommandService {
                 postRequestDto.getPostStatus()
         );
 
+        // changed == false -> 변경 사항이 없음
         if (!changed) {
             log.info("게시글 변경 사항 없음: postId={}", postId);
             return PostResponseDto.fromEntity(post);
         }
 
-        // Redis 기존 캐시 삭제
+        // Redis 기존 캐시 삭제 - 데이터 정합성을 위해 명시적 무효화 방식 진행
         evictPostCache(postId);
 
         // kafka 이벤트 생성
@@ -107,7 +108,7 @@ public class PostCommandService {
     public void deletePost(Long postId, Long userId){
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(()-> new RuntimeException("해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(()-> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
         // 작성자 본인 확인
         if (!post.getUserId().equals(userId)) {
@@ -124,7 +125,7 @@ public class PostCommandService {
         // 비즈니스 메소드 - postStatus 를 NORMAL -> DELETED 변경
         post.delete();
 
-        // Redis 캐시 삭제
+        // Redis 기존 캐시 삭제 - 데이터 정합성을 위해 명시적 무효화 방식 진행
         evictPostCache(postId);
 
         // Kafka 이벤트 생성

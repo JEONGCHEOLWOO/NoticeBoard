@@ -1,13 +1,13 @@
 package com.example.NoticeBoard.domain.comment.service;
 
+import com.example.NoticeBoard.domain.comment.dto.CommentRequestDto;
+import com.example.NoticeBoard.domain.comment.dto.CommentResponseDto;
 import com.example.NoticeBoard.domain.comment.entity.Comment;
 import com.example.NoticeBoard.domain.comment.event.CommentEventProducer;
 import com.example.NoticeBoard.domain.comment.repository.CommentRepository;
-import com.example.NoticeBoard.domain.comment.dto.CommentResponseDto;
-import com.example.NoticeBoard.domain.comment.dto.CommentRequestDto;
-import com.example.NoticeBoard.global.enumeration.CommentStatus;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.user.repository.UserRepository;
+import com.example.NoticeBoard.global.enumeration.CommentStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,13 +82,13 @@ public class CommentCommandService {
 
         Comment savedComment = commentRepository.save(comment);
 
-        commentEventProducer.sendCommentCreatedEvent(savedComment.getId());
+        commentEventProducer.sendCommentCreatedEvent(savedComment.getId(),postId);
         log.info("댓글 생성 완료: commentId={}, parentId={}, postId={}, userId={}", savedComment.getId(), savedComment.getParentId(), savedComment.getPostId(), savedComment.getUserId());
 
         return CommentResponseDto.fromEntity(savedComment);
     }
 
-    // 댓글 수정 - IllegalArgumentException 와 IllegalStateException 차이
+    // 댓글 수정
     public CommentResponseDto updateComment(Long commentId, Long userId, CommentRequestDto commentRequestDto){
         
         Comment comment = commentRepository.findById(commentId)
@@ -112,15 +112,25 @@ public class CommentCommandService {
         // 허용된 주소에서 가져온 GIF만 사용 가능.
         validateGifUrl(commentRequestDto.getGifUrl());
 
-        // ------- 여기서 부터 수정 필요.
         // 비즈니스 메소드(comment 엔터티)
-        comment.update(commentRequestDto.getContent(), commentRequestDto.getImageUrl(), commentRequestDto.getGifUrl());
+        boolean changed = comment.isChanged(
+                commentRequestDto.getContent(),
+                commentRequestDto.getImageUrl(),
+                commentRequestDto.getGifUrl(),
+                commentRequestDto.getCommentStatus()
+        );
 
-        // Redis 기존 캐시 삭제
+        // changed == false -> 변경 사항이 없음
+        if (!changed){
+            log.info("댓글 변경 사항 없음: commentId={}", commentId);
+            return  CommentResponseDto.fromEntity(comment);
+        }
+
+        // Redis 기존 캐시 삭제 - 데이터 정합성을 위해 명시적 무효화 방식 진행
         evictCommentCache(commentId);
         
         // kafka 이벤트 생성
-        commentEventProducer.sendCommentUpdateEvent(commentId);
+        commentEventProducer.sendCommentUpdateEvent(commentId, comment.getPostId());
         log.info("댓글 수정 완료: commentId={}, parentId={}, postId={}, userId={}", commentId, comment.getParentId(), comment.getPostId(), userId);
 
         return CommentResponseDto.fromEntity(comment);
@@ -141,14 +151,21 @@ public class CommentCommandService {
             throw new IllegalStateException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
+        // 재처리 발생 가능성을 위한 멱등성(idempotent)
+        // 멱등성이란 연산을 여러 번 적용하더라도 결과가 달라지지 않는 성질
+        if (comment.getCommentStatus() == CommentStatus.DELETED) {
+            log.info("이미 삭제된 댓글 요청 무시: commentId={}", commentId);
+            return;
+        }
+
         // 비즈니스 메소드 (Comment 엔터티) -> commentStatus 를 NORMAL -> DELETED 변경
         comment.delete();
 
-        // Redis 기존 캐시 삭제
+        // Redis 기존 캐시 삭제 - 데이터 정합성을 위해 명시적 무효화 방식 진행
         evictCommentCache(commentId);
 
         // kafka 이벤트 생성
-        commentEventProducer.sendCommentDeleteEvent(commentId);
+        commentEventProducer.sendCommentDeleteEvent(commentId, comment.getPostId());
         log.info("댓글 삭제 완료: commentId={}, parentId={}, postId={}, userId={}", commentId, comment.getParentId(), comment.getPostId(), userId);
     }
 
