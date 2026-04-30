@@ -33,7 +33,7 @@ public class PostReportService {
             throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
         }
 
-        if (postReportRepository.existsByPostIdAndUserId(postId, userId)) {
+        if (postReportRepository.existsByPostIdAndReporter(postId, userId)) {
             throw new IllegalStateException("이미 신고한 게시글입니다.");
         }
 
@@ -43,7 +43,7 @@ public class PostReportService {
 
         PostReport report = PostReport.builder()
                 .postId(postId)
-                .userId(userId)
+                .reporter(userId)
                 .content(requestDto.getContent())
                 .reportReason(requestDto.getReason())
                 .reportStatus(ReportStatus.PROCESSING)

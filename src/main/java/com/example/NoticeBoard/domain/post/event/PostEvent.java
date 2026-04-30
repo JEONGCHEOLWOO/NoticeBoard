@@ -1,4 +1,4 @@
-package com.example.NoticeBoard.domain.post.entity;
+package com.example.NoticeBoard.domain.post.event;
 
 import lombok.*;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class PostEvent implements Serializable {
 
     private Long postId; // 게시글 Id
-    private String eventType; // 이벤트 타입: CREATE, UPDATE, DELETE
+    private PostEventType eventType; // 이벤트 타입: CREATE, UPDATE, DELETE
     private LocalDateTime eventTime; // 이벤트 발행 시간
     private String eventId; // 이벤트 Id (중복 처리 방지용)
     private List<Long> postIds; // 게시글 목록

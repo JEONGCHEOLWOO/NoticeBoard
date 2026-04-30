@@ -26,7 +26,6 @@ public class PostQueryController {
     public ResponseEntity<PostResponseDto> getPostDetail(@PathVariable Long postId){
         log.info("게시글 상세 조회 요청: postId={}", postId);
         log.info("게시글 조회수 증가 요청: postId={}", postId);
-        postQueryService.incrementViewCount(postId);
         return ResponseEntity.ok(postQueryService.getPostDetail(postId));
     }
 

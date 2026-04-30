@@ -1,7 +1,7 @@
 package com.example.NoticeBoard.domain.post.event;
 
-import com.example.NoticeBoard.domain.post.entity.PostEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +10,7 @@ import java.util.List;
 // kafka 이벤트 발행
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -17,31 +18,34 @@ public class PostEventProducer {
 
     public void sendPostCreatedEvent(Long postId){
         PostEvent event = PostEvent.builder()
-                        .eventType("CREATE")
+                        .eventType(PostEventType.CREATE)
                         .postId(postId)
                         .build();
         kafkaTemplate.send(POST_EVENT_TOPIC, event);
+        log.info("게시글 이벤트 발행: type={}, postId={}", event.getEventType(), postId);
     }
 
     public void sendPostUpdateEvent(Long postId){
         PostEvent event = PostEvent.builder()
-                .eventType("UPDATE")
+                .eventType(PostEventType.UPDATE)
                 .postId(postId)
                 .build();
         kafkaTemplate.send(POST_EVENT_TOPIC, event);
+        log.info("게시글 이벤트 발행: type={}, postId={}", event.getEventType(), postId);
     }
 
     public void sendPostDeleteEvent(Long postId){
         PostEvent event = PostEvent.builder()
-                .eventType("DELETE")
+                .eventType(PostEventType.DELETE)
                 .postId(postId)
                 .build();
         kafkaTemplate.send(POST_EVENT_TOPIC, event);
+        log.info("게시글 이벤트 발행: type={}, postId={}", event.getEventType(), postId);
     }
 
     public void sendPostDeleteBatchEvent(List<Long> postIds){
         PostEvent event = PostEvent.builder()
-                .eventType("DELETE_BATCH")
+                .eventType(PostEventType.DELETE_BATCH)
                 .postIds(postIds)
                 .build();
         kafkaTemplate.send(POST_EVENT_TOPIC, event);

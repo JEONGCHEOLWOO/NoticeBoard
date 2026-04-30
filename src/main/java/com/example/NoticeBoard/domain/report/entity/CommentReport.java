@@ -24,7 +24,7 @@ public class CommentReport {
     private Long commentId; // 신고 당한 댓글 id
 
     @Column(name = "user_id", nullable = false)
-    private Long userId; // 신고한 사람의 id
+    private Long reporter; // 신고한 사람의 id
 
     @NotBlank
     @Column(columnDefinition = "TEXT", nullable = false, updatable = false)

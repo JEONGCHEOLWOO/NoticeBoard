@@ -20,10 +20,10 @@ public class ViewCountConsumer {
 
         log.info("조회수 kafka 이벤트 수신: postId={}", postId);
 
-        String key = "post:view:" + postId;
+        String key = "post:view:count:" + postId;
         // INCR post:view:postId -> INCR post:view:12 -> 게시글 12의 조회수 증가.
         // 여기서 Redis의 String 명령어 INCR 실행.
         redisTemplate.opsForValue().increment(key);
-        log.info("Redis post:view INCR 완료: postId={}, key={}", postId, key);
+        log.info("Redis post:view:count:{postId} INCR 완료: postId={}, key={}", postId, key);
     }
 }

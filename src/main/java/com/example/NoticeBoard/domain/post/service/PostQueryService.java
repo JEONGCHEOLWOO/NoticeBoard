@@ -22,9 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 
 // Post 읽기 전용 서비스
+// @Transactional(readOnly = true) 는 읽기 전용 모드로 성능 향상에 도움이 된다. 해당 속성을 true로 설정함으로 트랜잭션이 데이터 베이스에 대한 변경을 수행하지 않도록해서 데이터의 무결성을 보장하는데 도움이 된다.
+// 위 어노테이션은 대표적으로 SimpleJpaRepository에 있는 findById, save, delete 메소드에 구현되어 있다.
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 @Slf4j
 public class PostQueryService {
     private final PostRepository postRepository;
@@ -44,11 +46,13 @@ public class PostQueryService {
     }
 
     // 게시글 조회 (내용)
-    @Transactional(readOnly = true)
     public PostResponseDto getPostDetail(Long postId){
 
+        // 조회수 증가
+        incrementViewCount(postId);
+
         String cacheKey = "post:detail:" + postId;
-        // GET post:detail:postId -> GET post:detail:12 -> 게시글 12의 값을 불러옴
+        // GET post:detail:{postId} -> GET post:detail:12 -> 게시글 12의 값을 불러옴
         // 여기서 Redis의 String 명령어 Get 실행.
         // 캐시 조회
         PostResponseDto cachedPost = (PostResponseDto) redisTemplate.opsForValue().get(cacheKey);
@@ -79,10 +83,6 @@ public class PostQueryService {
     }
 
     // 게시글 조회(제목, 내용, 제목+내용, 작성자)
-    // @Transactional(readOnly = true) 는 읽기 전용 모드로 성능 향상에 도움이 된다. 해당 속성을 true로 설정함으로 트랜잭션이 데이터 베이스에 대한 변경을 수행하지 않도록해서 데이터의 무결성을 보장하는데 도움이 된다.
-    // 위 어노테이션은 대표적으로 SimpleJpaRepository에 있는 findById, save, delete 메소드에 구현되어 있다.
-    // 찾아보니 확실히 성능 개선에 대해서는 이점이 있지만, 추가 쿼리로 인해 DB의 네트워크 요청 건수 또한 최대 6배까지 늘어날 수 있어 비용이 많이 들 수 있기 때문에, 단건 조회(update, insert)요청 메소드에서는 사용하지 않는 것을 추천한다고 한다.
-    @Transactional(readOnly = true)
     public Page<PostSearchResponseDto> searchPosts(String keyword, SearchType searchType, Pageable pageable){
         
         Page<PostSearchDocument> documents = postSearchRepository.searchByCondition(keyword, searchType, pageable);
@@ -95,7 +95,6 @@ public class PostQueryService {
     // 게시글 조회(전체) - 실무에서는 findAll()를 사용하지 않음
     // -> 대규모 서비스에서는 데이터의 양이 만약 10만건이 들어온다고 하면 해당 데이터를 전부 찾는데 많은 시간이 소요되고 GC 압박(cpu 자원을 과도하게 소모하고 프로그램 성능을 저하시키는 상태)와 OutOfMemory 발생 가능.
     // 따라서 페이징을 사용해서 한 페이지에 나오는 수 만큼만 찾음. (1~20)
-    @Transactional(readOnly = true)
     public Page<PostSearchResponseDto> findAllPosts(int page, int size){
         Pageable pageable = createPageable(page,size);
 

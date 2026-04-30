@@ -25,12 +25,22 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 게시글 좋아요 수 증가
     @Modifying
     @Query("UPDATE Post p SET p.likeCount = p.likeCount + :count WHERE p.id = :postId")
-    void incrementLikeCount(@Param("postId") Long postId, @Param("count") int count);
+    void increaseLikeCount(@Param("postId") Long postId, @Param("count") Long count);
 
     // 조회수 증가
     @Modifying
     @Query("UPDATE Post p SET p.viewCount = p.viewCount + :count WHERE p.id = :postId")
-    void incrementViewCount(@Param("postId") Long postId, @Param("count") Integer count);
+    void increaseViewCount(@Param("postId") Long postId, @Param("count") Long count);
+
+    // 댓글 수 증가
+    @Modifying
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + :count WHERE p.id = :postId")
+    void increaseCommentCount(@Param("postId") Long postId, @Param("count") Long count);
+
+    // 댓글 수 감소
+    @Modifying
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount - :count WHERE p.id = :postId")
+    void decreaseCommentCount(@Param("postId") Long postId, @Param("count") Long count);
 
     // 사용자가 삭제 요청을 한 후 30일이 지나 DB에서 데이터 삭제 (Hard Delete)
     @Modifying

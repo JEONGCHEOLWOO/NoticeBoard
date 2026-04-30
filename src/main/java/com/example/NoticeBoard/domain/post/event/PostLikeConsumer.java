@@ -28,17 +28,17 @@ public class PostLikeConsumer {
         String key = "post:like:count:" + postId;
 
         if(type.equals("LIKE")){
-            // INCR post:like:count:postId -> INCR post:like:count:12 -> 게시글 12 좋아요 수 증가.
+            // INCR post:like:count:{postId} -> INCR post:like:count:12 -> 게시글 12 좋아요 수 증가.
             // 여기서 Redis의 String 명령어 INCR 실행.
             redisTemplate.opsForValue().increment(key);
-            log.info("Redis post:like:count INCR 완료: postId={}, key={}", postId, key);
+            log.info("Redis post:like:count:{postId} INCR 완료: postId={}, key={}", postId, key);
         }
-
-        if(type.equals("UNLIKE")){
-            // DECR post:like:count:postId -> DECR post:like:count:12 -> 게시글 12 좋아요 수 감소.
-            // 여기서 Redis의 String 명령어 DECR 실행.
-            redisTemplate.opsForValue().decrement(key);
-            log.info("Redis post:like:count DECR 완료: postId={}, key={}", postId, key);
-        }
+//
+//        if(type.equals("UNLIKE")){
+//            // DECR post:like:count:{postId} -> DECR post:like:count:12 -> 게시글 12 좋아요 수 감소.
+//            // 여기서 Redis의 String 명령어 DECR 실행.
+//            redisTemplate.opsForValue().decrement(key);
+//            log.info("Redis post:like:count:{postId} DECR 완료: postId={}, key={}", postId, key);
+//        }
     }
 }

@@ -33,7 +33,7 @@ public class CommentReportService {
             throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
         }
 
-        if (commentReportRepository.existsByCommentIdAndUserId(commentId, userId)) {
+        if (commentReportRepository.existsByCommentIdAndReporter(commentId, userId)) {
             throw new IllegalStateException("이미 신고한 댓글입니다.");
         }
 
@@ -43,7 +43,7 @@ public class CommentReportService {
 
         CommentReport report = CommentReport.builder()
                 .commentId(commentId)
-                .userId(userId)
+                .reporter(userId)
                 .content(requestDto.getText())
                 .reportReason(requestDto.getReason())
                 .reportStatus(ReportStatus.PROCESSING)

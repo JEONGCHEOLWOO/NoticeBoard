@@ -1,4 +1,4 @@
-package com.example.NoticeBoard.domain.comment.entity;
+package com.example.NoticeBoard.domain.comment.event;
 
 import lombok.*;
 
@@ -16,7 +16,7 @@ public class CommentEvent implements Serializable {
 
     private Long commentId; // 댓글 Id
     private Long postId; // 게시글 Id
-    private String eventType; // 이벤트 타입: CREATE, UPDATE, DELETE
+    private CommentEventType eventType; // 이벤트 타입: CREATE, UPDATE, DELETE
     private LocalDateTime eventTime; // 이벤트 발행 시간
     private String eventId; // 이벤트 Id (중복 처리 방지용)
     private List<Long> commentIds; // 댓글 목록

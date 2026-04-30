@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +38,7 @@ public class CommentCommandService {
             "media.tenor.com"
     );
 
-    public static final String COMMENT_DETAIL = "comment:detail:";
+    public static final String COMMENT_LIST = "comment:list:keys:";
 
     // 댓글 생성
     public CommentResponseDto createComment(Long postId, Long userId, CommentRequestDto commentRequestDto) {
@@ -127,7 +128,7 @@ public class CommentCommandService {
         }
 
         // Redis 기존 캐시 삭제 - 데이터 정합성을 위해 명시적 무효화 방식 진행
-        evictCommentCache(commentId);
+        evictCommentCache(comment.getPostId());
         
         // kafka 이벤트 생성
         commentEventProducer.sendCommentUpdateEvent(commentId, comment.getPostId());
@@ -162,7 +163,7 @@ public class CommentCommandService {
         comment.delete();
 
         // Redis 기존 캐시 삭제 - 데이터 정합성을 위해 명시적 무효화 방식 진행
-        evictCommentCache(commentId);
+        evictCommentCache(comment.getPostId());
 
         // kafka 이벤트 생성
         commentEventProducer.sendCommentDeleteEvent(commentId, comment.getPostId());
@@ -170,8 +171,17 @@ public class CommentCommandService {
     }
 
     // Redis 캐시 삭제 - 데이터가 수정되거나 삭제되면 캐시를 제거해서 데이터 불일치를 방지시킴.
-    private void evictCommentCache(Long commentId){
-        redisTemplate.delete(COMMENT_DETAIL + commentId);
+    private void evictCommentCache(Long postId){
+
+        String keySet = COMMENT_LIST + postId;
+
+        Set<Object> keys = redisTemplate.opsForSet().members(keySet);
+
+        if(keys != null && !keys.isEmpty()){
+            redisTemplate.delete(keys.toString());
+        }
+
+        redisTemplate.delete(keySet);
     }
 
     // 댓글 이미지/GIF 검증

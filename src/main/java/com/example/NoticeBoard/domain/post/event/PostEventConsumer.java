@@ -1,7 +1,6 @@
 package com.example.NoticeBoard.domain.post.event;
 
 import com.example.NoticeBoard.domain.post.entity.Post;
-import com.example.NoticeBoard.domain.post.entity.PostEvent;
 import com.example.NoticeBoard.domain.post.entity.PostSearchDocument;
 import com.example.NoticeBoard.domain.post.repository.PostRepository;
 import com.example.NoticeBoard.domain.post.repository.PostSearchRepository;
@@ -27,14 +26,14 @@ public class PostEventConsumer {
         log.info("게시글 CUD kafka 이벤트 수신 type={}", event.getEventType());
         
         switch (event.getEventType()){
-            case "CREATE":
-            case "UPDATE":
+            case CREATE:
+            case UPDATE:
                 indexPost(event.getPostId());
                 break;
-            case "DELETE":
+            case DELETE:
                 deletePost(event.getPostId());
                 break;
-            case "DELETE_BATCH":
+            case DELETE_BATCH:
                 deletePostBulk(event.getPostIds());
                 break;
         }
