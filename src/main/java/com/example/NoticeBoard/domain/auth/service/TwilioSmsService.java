@@ -2,7 +2,7 @@ package com.example.NoticeBoard.domain.auth.service;
 
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
-import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 // 전화번호 인증을 위해 인증번호를 문자로 발송하는 클래스 - TwilioSMS API
@@ -13,12 +13,15 @@ public class TwilioSmsService {
     private final String authToken;
     private final String fromNumber;
 
-    // 생성자 - .env 파일 로드
-    public TwilioSmsService() {
-        Dotenv dotenv = Dotenv.load();
-        this.accountSid = dotenv.get("TWILIO_ACCOUNT_SID");
-        this.authToken = dotenv.get("TWILIO_AUTH_TOKEN");
-        this.fromNumber = dotenv.get("TWILIO_PHONE_NUMBER");
+    public TwilioSmsService(
+            @Value("${twilio.account-sid}") String accountSid,
+            @Value("${twilio.auth-token}") String authToken,
+            @Value("${twilio.phone-number}") String fromNumber
+    ) {
+        this.accountSid = accountSid;
+        this.authToken = authToken;
+        this.fromNumber = fromNumber;
+
         Twilio.init(accountSid, authToken);
     }
 

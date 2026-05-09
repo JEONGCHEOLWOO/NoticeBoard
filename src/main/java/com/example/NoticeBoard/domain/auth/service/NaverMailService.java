@@ -1,9 +1,9 @@
 package com.example.NoticeBoard.domain.auth.service;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Properties;
@@ -22,10 +22,12 @@ public class NaverMailService {
     // Simple Mail Transfer Protocol 단순 전자우편 전송 규약으로 인터넷을 통해 이메일을 보낼 때 사용하는 표준 프로토콜
     // 스팸 및 무단 사용을 방지하기 위해 사용자는 메일 서버에 로그인하여 인증을 거쳐야만 메일을 보낼 수 있는 구조
     // 포트는 587(TLS)나 465(SSL) 포트를 사용. TLS - Transport Layer Securiy(전송 계층 보안),  SSL - Secure Sockets Layer(보안 소켓 계층)
-    public NaverMailService() {
-        Dotenv dotenv = Dotenv.load();
-        this.username = dotenv.get("NAVER_ID");
-        this.password = dotenv.get("NAVER_PASSWORD");
+    public NaverMailService(
+            @Value("${naver.mail.username}") String username,
+            @Value("${naver.mail.password}") String password
+    ) {
+        this.username = username;
+        this.password = password;
     }
 
     // 이메일 전송

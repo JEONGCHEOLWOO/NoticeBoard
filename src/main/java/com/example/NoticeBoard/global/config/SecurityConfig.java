@@ -38,6 +38,8 @@ public class SecurityConfig {
                     .requestMatchers("/", "/oauth2/**", "/login/**", "/oauth-success").permitAll()
                     .requestMatchers("/posts/search/**").permitAll()
                     .requestMatchers("/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/actuator/prometheus").permitAll()
+                    .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2

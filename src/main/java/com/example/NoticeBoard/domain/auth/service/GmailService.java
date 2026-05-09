@@ -9,24 +9,26 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
-import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.mail.*;
-import jakarta.mail.internet.*;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Properties;
 
 // 아이디 찾기, 비밀번호 찾기에서 이메일 인증을 위한 클래스 - Gmail
 @Service
 public class GmailService {
     private final Gmail gmail;
 
-    public GmailService() throws Exception {
-        Dotenv dotenv = Dotenv.load();
-        String clientId = dotenv.get("GOOGLE_CLIENT_ID");
-        String clientSecret = dotenv.get("GOOGLE_CLIENT_SECRET");
-        String refreshToken = dotenv.get("GOOGLE_REFRESH_TOKEN");
+    public GmailService(@Value("${google.client-id}") String clientId,
+                        @Value("${google.client-secret}") String clientSecret,
+                        @Value("${google.refresh-token}") String refreshToken) throws Exception {
 
         // Refresh Token으로 Access Token 재발급
         var tokenResponse = new GoogleRefreshTokenRequest(

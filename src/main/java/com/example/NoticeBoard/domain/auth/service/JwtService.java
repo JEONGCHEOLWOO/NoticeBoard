@@ -1,14 +1,14 @@
 package com.example.NoticeBoard.domain.auth.service;
 
-import java.util.Date;
-
-import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 // 웹 애플리케이션에서 사용자 인증 및 권한 부여를 위해 사용되는 전자 서명된 JSON 토큰
 @Component
@@ -20,7 +20,7 @@ public class JwtService {
 
     public String generateToken(Authentication authentication) {
         String email = extractEmailFromPrincipal(authentication);
-        Claims claims = Jwts.claims().setSubject(email);
+        Claims claims = Jwts.claims().setSubject(email).build();
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds); // 토큰 만료 시간
 

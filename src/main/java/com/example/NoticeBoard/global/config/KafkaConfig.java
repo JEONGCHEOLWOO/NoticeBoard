@@ -24,7 +24,7 @@ public class KafkaConfig {
         // kafka 시작 서버 주소(Broker 위치), 이벤트 key, value를 직렬화(파싱) 설정.
         // kafkaTemplate.send(TOPIC, postId) 구조
         // If the map previously contained a mapping for the key, the old value is replaced by the specified value.
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "NoticeBoard_Kafka_broker:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class); // TOPIC 부분
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class); // postId나 postId+":Like" 부분
 
